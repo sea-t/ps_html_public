@@ -1,30 +1,10 @@
 {
-  "title": "我的导航页面",
+  "title": "我的工具集",
   "categories": [
     {
       "name": "开发工具",
       "icon": "🛠️",
       "links": [
-        {
-          "name": "GitHub",
-          "url": "https://github.com",
-          "description": "全球最大的代码托管平台"
-        },
-        {
-          "name": "Stack Overflow",
-          "url": "https://stackoverflow.com",
-          "description": "程序员问答社区"
-        },
-        {
-          "name": "VS Code",
-          "url": "https://code.visualstudio.com",
-          "description": "流行的代码编辑器"
-        },
-        {
-          "name": "MDN Web Docs",
-          "url": "https://developer.mozilla.org",
-          "description": "Web开发文档"
-        },
         {
           "name": "Docker 容器分析器",
           "url": "./docker-analyzer.html",
@@ -34,110 +14,6 @@
           "name": "JSON 转 Excel 工具",
           "url": "./json-to-excel.html",
           "description": "将 JSON 数据转换为表格并导出为 Excel 文件"
-        }
-      ]
-    },
-    {
-      "name": "前端框架",
-      "icon": "⚛️",
-      "links": [
-        {
-          "name": "React",
-          "url": "https://react.dev",
-          "description": "用于构建用户界面的JavaScript库"
-        },
-        {
-          "name": "Vue.js",
-          "url": "https://vuejs.org",
-          "description": "渐进式JavaScript框架"
-        },
-        {
-          "name": "Angular",
-          "url": "https://angular.io",
-          "description": "企业级应用框架"
-        },
-        {
-          "name": "Svelte",
-          "url": "https://svelte.dev",
-          "description": "编译型前端框架"
-        }
-      ]
-    },
-    {
-      "name": "在线学习",
-      "icon": "📚",
-      "links": [
-        {
-          "name": "freeCodeCamp",
-          "url": "https://www.freecodecamp.org",
-          "description": "免费编程学习平台"
-        },
-        {
-          "name": "Coursera",
-          "url": "https://www.coursera.org",
-          "description": "在线课程平台"
-        },
-        {
-          "name": "Udemy",
-          "url": "https://www.udemy.com",
-          "description": "在线教育市场"
-        },
-        {
-          "name": "LeetCode",
-          "url": "https://leetcode.com",
-          "description": "算法练习平台"
-        }
-      ]
-    },
-    {
-      "name": "设计资源",
-      "icon": "🎨",
-      "links": [
-        {
-          "name": "Dribbble",
-          "url": "https://dribbble.com",
-          "description": "设计作品分享平台"
-        },
-        {
-          "name": "Behance",
-          "url": "https://www.behance.net",
-          "description": "创意作品展示平台"
-        },
-        {
-          "name": "Figma",
-          "url": "https://www.figma.com",
-          "description": "协作式界面设计工具"
-        },
-        {
-          "name": "Unsplash",
-          "url": "https://unsplash.com",
-          "description": "免费高质量图片库"
-        }
-      ]
-    },
-    {
-      "name": "常用工具",
-      "icon": "🔧",
-      "links": [
-        {
-          "name": "Google",
-          "url": "https://www.google.com",
-          "description": "搜索引擎"
-        },
-        {
-          "name": "Gmail",
-          "url": "https://mail.google.com",
-          "description": "电子邮件服务"
-        },
-        {
-          "name": "Notion",
-          "url": "https://www.notion.so",
-          "description": "笔记和协作工具"
-        },
-        {
-          "name": "ChatGPT",
-          "url": "https://chat.openai.com",
-          "description": "AI对话助手"
         }
       ]
     }
