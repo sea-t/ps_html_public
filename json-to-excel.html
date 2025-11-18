@@ -212,6 +212,72 @@
             min-width: 400px;
         }
 
+        .progress-close-btn {
+            margin-top: 15px;
+            padding: 8px 20px;
+            background: #3498db;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            width: 100%;
+        }
+
+        .progress-close-btn:hover {
+            background: #2980b9;
+        }
+
+        .download-link-container {
+            display: none;
+            margin-top: 15px;
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 4px;
+            border: 1px solid #dee2e6;
+        }
+
+        .download-link-title {
+            font-size: 13px;
+            color: #495057;
+            margin-bottom: 8px;
+            font-weight: 500;
+        }
+
+        .download-link-wrapper {
+            display: flex;
+            gap: 8px;
+        }
+
+        .download-link-input {
+            flex: 1;
+            padding: 8px;
+            border: 1px solid #ced4da;
+            border-radius: 4px;
+            font-size: 12px;
+            font-family: 'Consolas', 'Monaco', monospace;
+            background: white;
+        }
+
+        .copy-link-btn {
+            padding: 8px 15px;
+            background: #27ae60;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 12px;
+            white-space: nowrap;
+        }
+
+        .copy-link-btn:hover {
+            background: #229954;
+        }
+
+        .copy-link-btn.copied {
+            background: #7f8c8d;
+        }
+
         .progress-overlay {
             display: none;
             position: fixed;
@@ -302,6 +368,17 @@
             <div class="progress-bar" id="progressBar">0%</div>
         </div>
         <div class="progress-text" id="progressText">准备开始...</div>
+
+        <!-- 下载链接显示区域 -->
+        <div class="download-link-container" id="downloadLinkContainer">
+            <div class="download-link-title">下载链接:</div>
+            <div class="download-link-wrapper">
+                <input type="text" class="download-link-input" id="downloadLinkInput" readonly>
+                <button class="copy-link-btn" id="copyLinkBtn" onclick="copyDownloadLink()">复制链接</button>
+            </div>
+        </div>
+
+        <button class="progress-close-btn" id="progressCloseBtn" onclick="hideProgress()">关闭</button>
     </div>
 
     <!-- jQuery -->
@@ -316,6 +393,7 @@
     <script>
         let currentData = null;
         let dataTable = null;
+        let currentDownloadUrl = null; // 保存当前的下载URL
 
         // 进度条控制函数
         function showProgress() {
@@ -327,6 +405,14 @@
         function hideProgress() {
             document.getElementById('progressOverlay').style.display = 'none';
             document.getElementById('progressContainer').style.display = 'none';
+            document.getElementById('downloadLinkContainer').style.display = 'none';
+
+            // 清理下载URL
+            if (currentDownloadUrl) {
+                window.URL.revokeObjectURL(currentDownloadUrl);
+                currentDownloadUrl = null;
+                console.log('下载链接已清理');
+            }
         }
 
         function updateProgress(percent, text) {
@@ -335,6 +421,43 @@
             progressBar.style.width = percent + '%';
             progressBar.textContent = percent + '%';
             progressText.textContent = text;
+        }
+
+        function showDownloadLink(url) {
+            const container = document.getElementById('downloadLinkContainer');
+            const input = document.getElementById('downloadLinkInput');
+            input.value = url;
+            container.style.display = 'block';
+        }
+
+        function copyDownloadLink() {
+            const input = document.getElementById('downloadLinkInput');
+            const btn = document.getElementById('copyLinkBtn');
+
+            input.select();
+            input.setSelectionRange(0, 99999); // For mobile devices
+
+            try {
+                navigator.clipboard.writeText(input.value).then(() => {
+                    btn.textContent = '已复制!';
+                    btn.classList.add('copied');
+                    setTimeout(() => {
+                        btn.textContent = '复制链接';
+                        btn.classList.remove('copied');
+                    }, 2000);
+                }).catch(() => {
+                    // 降级到旧的复制方法
+                    document.execCommand('copy');
+                    btn.textContent = '已复制!';
+                    btn.classList.add('copied');
+                    setTimeout(() => {
+                        btn.textContent = '复制链接';
+                        btn.classList.remove('copied');
+                    }, 2000);
+                });
+            } catch (err) {
+                console.error('复制失败:', err);
+            }
         }
 
         // 格式化JSON
@@ -576,6 +699,8 @@
                     } else {
                         // 现代浏览器
                         const url = window.URL.createObjectURL(blob);
+                        currentDownloadUrl = url; // 保存URL以便稍后清理
+
                         const a = document.createElement('a');
                         a.href = url;
                         a.download = fileName;
@@ -585,11 +710,13 @@
                         console.log('触发下载链接点击');
                         a.click();
 
-                        // 延迟清理，确保下载开始
+                        // 显示下载链接
+                        showDownloadLink(url);
+
+                        // 延迟移除链接元素，但保留URL直到用户关闭弹窗
                         setTimeout(() => {
                             document.body.removeChild(a);
-                            window.URL.revokeObjectURL(url);
-                            console.log('下载链接已清理');
+                            console.log('下载链接元素已移除');
                         }, 1000);
 
                         downloadSuccess = true;
@@ -625,6 +752,8 @@
                             });
 
                             const url = window.URL.createObjectURL(blob);
+                            currentDownloadUrl = url; // 保存URL以便稍后清理
+
                             const a = document.createElement('a');
                             a.href = url;
                             a.download = fileName;
@@ -632,9 +761,12 @@
                             document.body.appendChild(a);
                             a.click();
 
+                            // 显示下载链接
+                            showDownloadLink(url);
+
                             setTimeout(() => {
                                 document.body.removeChild(a);
-                                window.URL.revokeObjectURL(url);
+                                console.log('下载链接元素已移除');
                             }, 1000);
 
                             downloadSuccess = true;
@@ -648,9 +780,8 @@
                 if (downloadSuccess) {
                     updateProgress(95, '下载已开始...');
                     await new Promise(resolve => setTimeout(resolve, 300));
-                    updateProgress(100, '导出完成！');
-                    await new Promise(resolve => setTimeout(resolve, 500));
-                    hideProgress();
+                    updateProgress(100, '导出完成！点击下方按钮关闭');
+                    // 不自动关闭，让用户手动关闭
                     showSuccess(`已导出 ${currentData.length} 条数据到 ${fileName}`);
                 } else {
                     hideProgress();
