@@ -14,6 +14,11 @@
           "name": "JSON 转 Excel 工具",
           "url": "./json-to-excel.html",
           "description": "将 JSON 数据转换为表格并导出为 Excel 文件"
+        },
+        {
+          "name": "Notion 嵌入页面",
+          "url": "./notion-embed.html",
+          "description": "嵌入的 Notion 文档页面"
         }
       ]
     }
