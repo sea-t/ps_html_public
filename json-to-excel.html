@@ -308,8 +308,10 @@
     <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
     <!-- DataTables -->
     <script src="https://cdn.datatables.net/1.13.7/js/jquery.dataTables.min.js"></script>
-    <!-- SheetJS -->
-    <script src="https://cdn.sheetjs.com/xlsx-0.20.0/package/dist/xlsx.full.min.js"></script>
+    <!-- SheetJS - 使用更可靠的 CDN -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <!-- 备用 CDN -->
+    <!-- <script src="https://unpkg.com/xlsx@0.18.5/dist/xlsx.full.min.js"></script> -->
 
     <script>
         let currentData = null;
@@ -543,61 +545,98 @@
                 updateProgress(85, '正在准备下载...');
                 await new Promise(resolve => setTimeout(resolve, 100));
 
-                // 方法1：标准方式（最兼容）
+                console.log('开始生成 Excel 文件，记录数:', currentData.length);
+
+                // 优先使用 Blob 方式（更可靠）
                 try {
-                    XLSX.writeFile(wb, fileName);
-                    downloadSuccess = true;
+                    updateProgress(88, '正在生成文件数据...');
+
+                    // 使用 array buffer 方式生成
+                    const wbout = XLSX.write(wb, {
+                        bookType: 'xlsx',
+                        type: 'array',
+                        bookSST: false
+                    });
+
+                    const blob = new Blob([wbout], {
+                        type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+                    });
+
+                    console.log('Blob 创建成功，大小:', blob.size, 'bytes');
+
+                    updateProgress(92, '正在触发下载...');
+                    await new Promise(resolve => setTimeout(resolve, 50));
+
+                    // 创建下载链接
+                    if (window.navigator && window.navigator.msSaveOrOpenBlob) {
+                        // IE 特殊处理
+                        console.log('使用 IE 下载方式');
+                        window.navigator.msSaveOrOpenBlob(blob, fileName);
+                        downloadSuccess = true;
+                    } else {
+                        // 现代浏览器
+                        const url = window.URL.createObjectURL(blob);
+                        const a = document.createElement('a');
+                        a.href = url;
+                        a.download = fileName;
+                        a.style.display = 'none';
+
+                        document.body.appendChild(a);
+                        console.log('触发下载链接点击');
+                        a.click();
+
+                        // 延迟清理，确保下载开始
+                        setTimeout(() => {
+                            document.body.removeChild(a);
+                            window.URL.revokeObjectURL(url);
+                            console.log('下载链接已清理');
+                        }, 1000);
+
+                        downloadSuccess = true;
+                    }
                 } catch (e1) {
-                    console.warn('标准下载方式失败，尝试备用方案:', e1);
+                    console.error('Blob 方式失败:', e1);
 
-                    // 方法2：Blob方式
+                    // 备用方法1：使用 XLSX.writeFile
                     try {
-                        updateProgress(88, '尝试备用下载方式...');
-                        const wbout = XLSX.write(wb, { bookType: 'xlsx', type: 'binary' });
+                        console.log('尝试 writeFile 方式');
+                        updateProgress(88, '尝试标准下载方式...');
+                        XLSX.writeFile(wb, fileName);
+                        downloadSuccess = true;
+                    } catch (e2) {
+                        console.error('writeFile 方式失败:', e2);
 
-                        // 字符串转ArrayBuffer
-                        function s2ab(s) {
-                            const buf = new ArrayBuffer(s.length);
-                            const view = new Uint8Array(buf);
-                            for (let i = 0; i < s.length; i++) view[i] = s.charCodeAt(i) & 0xFF;
-                            return buf;
-                        }
+                        // 备用方法2：Binary 转 Blob
+                        try {
+                            console.log('尝试 Binary 转 Blob 方式');
+                            updateProgress(90, '尝试备用下载方式...');
+                            const wbout = XLSX.write(wb, { bookType: 'xlsx', type: 'binary' });
 
-                        const blob = new Blob([s2ab(wbout)], { type: "application/octet-stream" });
+                            // 字符串转ArrayBuffer
+                            function s2ab(s) {
+                                const buf = new ArrayBuffer(s.length);
+                                const view = new Uint8Array(buf);
+                                for (let i = 0; i < s.length; i++) view[i] = s.charCodeAt(i) & 0xFF;
+                                return buf;
+                            }
 
-                        // 创建下载链接
-                        if (window.navigator && window.navigator.msSaveOrOpenBlob) {
-                            // IE特殊处理
-                            window.navigator.msSaveOrOpenBlob(blob, fileName);
-                        } else {
-                            // 其他浏览器
+                            const blob = new Blob([s2ab(wbout)], {
+                                type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+                            });
+
                             const url = window.URL.createObjectURL(blob);
                             const a = document.createElement('a');
-                            a.style.display = 'none';
                             a.href = url;
                             a.download = fileName;
+                            a.style.display = 'none';
                             document.body.appendChild(a);
                             a.click();
+
                             setTimeout(() => {
                                 document.body.removeChild(a);
                                 window.URL.revokeObjectURL(url);
-                            }, 100);
-                        }
-                        downloadSuccess = true;
-                    } catch (e2) {
-                        console.warn('Blob下载方式失败，尝试base64方案:', e2);
+                            }, 1000);
 
-                        // 方法3：Base64方式（最后的备选）
-                        try {
-                            updateProgress(90, '尝试Base64下载方式...');
-                            const wbout = XLSX.write(wb, { bookType: 'xlsx', type: 'base64' });
-                            const a = document.createElement('a');
-                            a.href = 'data:application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;base64,' + wbout;
-                            a.download = fileName;
-                            a.style.display = 'none';
-                            document.body.appendChild(a);
-                            a.click();
-                            document.body.removeChild(a);
                             downloadSuccess = true;
                         } catch (e3) {
                             console.error('所有下载方式都失败:', e3);
