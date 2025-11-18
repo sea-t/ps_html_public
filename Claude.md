@@ -261,12 +261,72 @@ bash .github/scripts/setup-git-aliases.sh
    ```
 
 4. **创建 PR**
-   - Claude Code 可自动创建
+   - Claude Code 可自动创建（使用 `gh` 命令）
    - 或手动通过 GitHub 创建
+
+   **手动创建 PR 链接格式：**
+   ```
+   https://github.com/sea-t/ps_html_public/pull/new/<branch-name>
+   ```
 
 5. **合并后自动清理**
    - 分支自动删除（周末 Cron 任务）
    - 或使用 `git cleanup` 手动清理
+
+### 当前活跃的 PR 信息
+
+**分支名称：** `claude/create-page-with-links-011DiCUwt3G1XFJbvcWMNSpF`
+
+**PR 创建链接：**
+```
+https://github.com/sea-t/ps_html_public/pull/new/claude/create-page-with-links-011DiCUwt3G1XFJbvcWMNSpF
+```
+
+**PR 标题建议：**
+```
+添加 Notion 嵌入页面并更新网站配色
+```
+
+**PR 描述模板：**
+```markdown
+## Summary
+本 PR 包含两个主要更新：
+
+### 1. 添加 Notion 嵌入页面
+- 创建了新的 `notion-embed.html` 页面，用于嵌入 Notion 文档
+- 在导航数据 `navigation-data.json` 中添加了新页面的链接入口
+- 采用响应式设计，页面支持桌面端和移动端显示
+
+### 2. 更新网站配色为蓝白简约风格
+- 将主色调从紫色渐变改为蓝色 (#0969da)，参考 GitHub 风格
+- 采用简约的灰白色背景 (#fafbfc)
+- 更新所有组件的配色方案，包括卡片、按钮、导航等
+- 优化 hover 和 active 状态的视觉效果
+- 移除过度的 backdrop-filter 和渐变效果
+- 更新深色模式配色以保持一致性
+
+## 视觉改进
+- 更加简约和专业的外观
+- 更好的可读性和对比度
+- 更流畅的交互体验
+- 统一的设计语言
+
+## Test plan
+- [ ] 访问主导航页面 `index.html`，确认新配色方案显示正常
+- [ ] 确认"开发工具"分类中显示"Notion 嵌入页面"链接
+- [ ] 点击"Notion 嵌入页面"链接，确认能正常跳转到新页面
+- [ ] 确认 Notion iframe 能正常加载和显示
+- [ ] 测试"返回导航"链接功能是否正常
+- [ ] 测试深色模式切换功能是否正常
+- [ ] 在移动端测试页面响应式布局是否正常
+- [ ] 检查所有现有页面的配色是否协调一致
+```
+
+**提交记录：**
+```
+e21e90a refactor: 更新网站配色为蓝白简约风格
+0934c8d feat: 添加 Notion 嵌入页面
+```
 
 ## 关键文件说明
 
