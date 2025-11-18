@@ -212,6 +212,22 @@
             min-width: 400px;
         }
 
+        .progress-close-btn {
+            margin-top: 15px;
+            padding: 8px 20px;
+            background: #3498db;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            width: 100%;
+        }
+
+        .progress-close-btn:hover {
+            background: #2980b9;
+        }
+
         .progress-overlay {
             display: none;
             position: fixed;
@@ -302,6 +318,7 @@
             <div class="progress-bar" id="progressBar">0%</div>
         </div>
         <div class="progress-text" id="progressText">准备开始...</div>
+        <button class="progress-close-btn" id="progressCloseBtn" onclick="hideProgress()">关闭</button>
     </div>
 
     <!-- jQuery -->
@@ -648,9 +665,8 @@
                 if (downloadSuccess) {
                     updateProgress(95, '下载已开始...');
                     await new Promise(resolve => setTimeout(resolve, 300));
-                    updateProgress(100, '导出完成！');
-                    await new Promise(resolve => setTimeout(resolve, 500));
-                    hideProgress();
+                    updateProgress(100, '导出完成！点击下方按钮关闭');
+                    // 不自动关闭，让用户手动关闭
                     showSuccess(`已导出 ${currentData.length} 条数据到 ${fileName}`);
                 } else {
                     hideProgress();
