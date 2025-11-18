@@ -196,6 +196,67 @@
         .resize-handle:hover {
             background: #3498db;
         }
+
+        /* 进度条样式 */
+        .progress-container {
+            display: none;
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: white;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+            z-index: 10000;
+            min-width: 400px;
+        }
+
+        .progress-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.5);
+            z-index: 9999;
+        }
+
+        .progress-title {
+            font-size: 16px;
+            color: #2c3e50;
+            margin-bottom: 15px;
+            font-weight: 500;
+        }
+
+        .progress-bar-wrapper {
+            width: 100%;
+            height: 30px;
+            background: #ecf0f1;
+            border-radius: 15px;
+            overflow: hidden;
+            margin-bottom: 10px;
+        }
+
+        .progress-bar {
+            height: 100%;
+            background: linear-gradient(90deg, #3498db, #2ecc71);
+            width: 0%;
+            transition: width 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 12px;
+            font-weight: bold;
+        }
+
+        .progress-text {
+            font-size: 14px;
+            color: #7f8c8d;
+            text-align: center;
+        }
     </style>
 </head>
 <body>
@@ -231,6 +292,18 @@
         </div>
     </div>
 
+    <!-- 进度条遮罩层 -->
+    <div class="progress-overlay" id="progressOverlay"></div>
+
+    <!-- 进度条容器 -->
+    <div class="progress-container" id="progressContainer">
+        <div class="progress-title">正在导出Excel文件...</div>
+        <div class="progress-bar-wrapper">
+            <div class="progress-bar" id="progressBar">0%</div>
+        </div>
+        <div class="progress-text" id="progressText">准备开始...</div>
+    </div>
+
     <!-- jQuery -->
     <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
     <!-- DataTables -->
@@ -241,6 +314,26 @@
     <script>
         let currentData = null;
         let dataTable = null;
+
+        // 进度条控制函数
+        function showProgress() {
+            document.getElementById('progressOverlay').style.display = 'block';
+            document.getElementById('progressContainer').style.display = 'block';
+            updateProgress(0, '准备开始...');
+        }
+
+        function hideProgress() {
+            document.getElementById('progressOverlay').style.display = 'none';
+            document.getElementById('progressContainer').style.display = 'none';
+        }
+
+        function updateProgress(percent, text) {
+            const progressBar = document.getElementById('progressBar');
+            const progressText = document.getElementById('progressText');
+            progressBar.style.width = percent + '%';
+            progressBar.textContent = percent + '%';
+            progressText.textContent = text;
+        }
 
         // 格式化JSON
         function formatJSON() {
@@ -353,20 +446,28 @@
             });
         }
 
-        // 导出Excel - 包含多种兼容方式
-        function exportExcel() {
+        // 导出Excel - 包含多种兼容方式和进度条
+        async function exportExcel() {
             if (!currentData) {
                 showError('没有数据可导出');
                 return;
             }
 
+            // 显示进度条
+            showProgress();
+
             try {
                 // 检查XLSX库是否加载
                 if (typeof XLSX === 'undefined') {
+                    hideProgress();
                     showError('Excel库未加载，请检查网络连接');
                     console.error('XLSX库未定义');
                     return;
                 }
+
+                // 阶段1：准备数据 (0-20%)
+                updateProgress(5, '正在准备数据...');
+                await new Promise(resolve => setTimeout(resolve, 100));
 
                 // 获取所有列
                 const allKeys = new Set();
@@ -374,25 +475,46 @@
                     Object.keys(item).forEach(key => allKeys.add(key));
                 });
 
-                // 构建工作表数据
+                updateProgress(15, `正在处理 ${currentData.length} 条记录...`);
+                await new Promise(resolve => setTimeout(resolve, 100));
+
+                // 阶段2：构建工作表数据 (20-40%)
+                updateProgress(20, '正在构建表格数据...');
                 const headers = Array.from(allKeys);
                 const wsData = [headers];
 
-                currentData.forEach(row => {
-                    const rowData = headers.map(header => {
-                        const value = row[header];
-                        if (value === null || value === undefined) return '';
-                        if (typeof value === 'object') return JSON.stringify(value);
-                        return value;
+                // 分批处理数据，避免大数据卡顿
+                const batchSize = 1000;
+                for (let i = 0; i < currentData.length; i += batchSize) {
+                    const batch = currentData.slice(i, Math.min(i + batchSize, currentData.length));
+                    batch.forEach(row => {
+                        const rowData = headers.map(header => {
+                            const value = row[header];
+                            if (value === null || value === undefined) return '';
+                            if (typeof value === 'object') return JSON.stringify(value);
+                            return value;
+                        });
+                        wsData.push(rowData);
                     });
-                    wsData.push(rowData);
-                });
 
-                // 创建工作簿
+                    // 更新进度
+                    const progress = 20 + Math.floor((i / currentData.length) * 20);
+                    updateProgress(progress, `已处理 ${Math.min(i + batchSize, currentData.length)} / ${currentData.length} 条记录...`);
+                    await new Promise(resolve => setTimeout(resolve, 10));
+                }
+
+                // 阶段3：创建工作簿 (40-60%)
+                updateProgress(45, '正在创建Excel工作簿...');
+                await new Promise(resolve => setTimeout(resolve, 100));
+
                 const wb = XLSX.utils.book_new();
                 const ws = XLSX.utils.aoa_to_sheet(wsData);
 
-                // 设置列宽
+                updateProgress(55, '正在优化表格格式...');
+                await new Promise(resolve => setTimeout(resolve, 100));
+
+                // 阶段4：设置列宽 (60-70%)
+                updateProgress(60, '正在设置列宽...');
                 const colWidths = headers.map(header => {
                     let maxWidth = header.length;
                     currentData.forEach(row => {
@@ -408,11 +530,18 @@
 
                 XLSX.utils.book_append_sheet(wb, ws, "Data");
 
+                // 阶段5：生成文件 (70-90%)
+                updateProgress(75, '正在生成Excel文件...');
+                await new Promise(resolve => setTimeout(resolve, 100));
+
                 // 生成文件名
                 const fileName = `data_${new Date().getTime()}.xlsx`;
 
                 // 尝试多种下载方式
                 let downloadSuccess = false;
+
+                updateProgress(85, '正在准备下载...');
+                await new Promise(resolve => setTimeout(resolve, 100));
 
                 // 方法1：标准方式（最兼容）
                 try {
@@ -423,6 +552,7 @@
 
                     // 方法2：Blob方式
                     try {
+                        updateProgress(88, '尝试备用下载方式...');
                         const wbout = XLSX.write(wb, { bookType: 'xlsx', type: 'binary' });
 
                         // 字符串转ArrayBuffer
@@ -459,6 +589,7 @@
 
                         // 方法3：Base64方式（最后的备选）
                         try {
+                            updateProgress(90, '尝试Base64下载方式...');
                             const wbout = XLSX.write(wb, { bookType: 'xlsx', type: 'base64' });
                             const a = document.createElement('a');
                             a.href = 'data:application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;base64,' + wbout;
@@ -474,13 +605,21 @@
                     }
                 }
 
+                // 阶段6：完成 (90-100%)
                 if (downloadSuccess) {
+                    updateProgress(95, '下载已开始...');
+                    await new Promise(resolve => setTimeout(resolve, 300));
+                    updateProgress(100, '导出完成！');
+                    await new Promise(resolve => setTimeout(resolve, 500));
+                    hideProgress();
                     showSuccess(`已导出 ${currentData.length} 条数据到 ${fileName}`);
                 } else {
+                    hideProgress();
                     showError('导出失败，请尝试使用其他浏览器或检查浏览器设置');
                 }
 
             } catch (e) {
+                hideProgress();
                 showError('导出失败: ' + e.message);
                 console.error('导出详细错误:', e);
             }
