@@ -1,0 +1,55 @@
+version: '3.8'
+
+services:
+  # 后端服务（开发模式）
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: snippet-manager-backend-dev
+    restart: unless-stopped
+    ports:
+      - "5000:5000"
+    environment:
+      - FLASK_ENV=development
+      - FLASK_APP=run.py
+      - FLASK_DEBUG=1
+      - SECRET_KEY=dev-secret-key
+      - DATABASE_URL=sqlite:///instance/snippets.db
+    volumes:
+      # 挂载代码以支持热重载
+      - ./backend:/app
+      # 持久化数据库
+      - backend-data-dev:/app/instance
+    networks:
+      - snippet-network
+    command: python run.py
+
+  # 前端服务（开发模式）
+  frontend-dev:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile.dev
+    container_name: snippet-manager-frontend-dev
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      - VITE_API_URL=http://localhost:5000
+    volumes:
+      # 挂载代码以支持热重载
+      - ./frontend:/app
+      - /app/node_modules
+    depends_on:
+      - backend
+    networks:
+      - snippet-network
+    command: npm run dev
+
+volumes:
+  backend-data-dev:
+    driver: local
+
+networks:
+  snippet-network:
+    driver: bridge

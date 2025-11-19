@@ -64,9 +64,39 @@ snippet-manager/
     └── package.json
 ```
 
-## 安装和运行
+## 快速开始
 
-### 后端设置
+### 🐳 Docker 部署（推荐）
+
+使用 Docker 是最简单快速的部署方式，无需手动配置环境。
+
+**一键启动：**
+```bash
+# 生产环境
+./docker-start.sh
+
+# 开发环境
+./docker-start-dev.sh
+```
+
+**访问应用：**
+- 生产环境: http://localhost
+- 开发环境: http://localhost:3000
+
+**添加示例数据：**
+```bash
+./docker-seed.sh
+```
+
+**详细文档**: 查看 [DOCKER.md](./DOCKER.md)
+
+---
+
+### 📦 传统方式部署
+
+如果不使用 Docker，可以按以下步骤手动安装：
+
+#### 后端设置
 
 1. 进入后端目录：
 ```bash
@@ -226,8 +256,28 @@ POST /api/snippets
 | created_at | DateTime | 创建时间 |
 | updated_at | DateTime | 更新时间 |
 
+## 部署方式对比
+
+| 特性 | Docker 部署 | 传统部署 |
+|------|------------|---------|
+| 环境配置 | ✅ 自动配置 | ❌ 手动配置 |
+| 依赖管理 | ✅ 容器化隔离 | ❌ 可能冲突 |
+| 一键启动 | ✅ 支持 | ❌ 多步骤 |
+| 跨平台 | ✅ 完全一致 | ⚠️ 可能差异 |
+| 数据持久化 | ✅ Volume | ✅ 本地文件 |
+| 生产就绪 | ✅ 包含 Nginx | ⚠️ 需额外配置 |
+| 推荐场景 | 生产环境、快速体验 | 开发调试 |
+
 ## 开发计划
 
+**已完成：**
+- [x] Docker 容器化部署
+- [x] 生产环境 Nginx 配置
+- [x] 开发环境热重载支持
+- [x] 健康检查和自动重启
+- [x] 数据持久化
+
+**计划中：**
 - [ ] 支持 Markdown 格式
 - [ ] 片段分享功能
 - [ ] 导入/导出功能
@@ -235,6 +285,14 @@ POST /api/snippets
 - [ ] 片段版本控制
 - [ ] 收藏夹功能
 - [ ] 暗色主题
+- [ ] Kubernetes 部署配置
+
+## 文档索引
+
+- 📖 [README.md](./README.md) - 项目介绍和功能说明
+- 🚀 [QUICKSTART.md](./QUICKSTART.md) - 传统方式快速开始
+- 🐳 [DOCKER.md](./DOCKER.md) - Docker 部署完整指南
+- 💻 [DEVELOPMENT.md](./DEVELOPMENT.md) - 开发文档和规范
 
 ## 贡献
 
