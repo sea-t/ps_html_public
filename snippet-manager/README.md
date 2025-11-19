@@ -66,16 +66,40 @@ snippet-manager/
 
 ## 快速开始
 
-### 🐳 Docker 部署（推荐）
+### ⚡ 超快速启动（使用预构建镜像）
 
-使用 Docker 是最简单快速的部署方式，无需手动配置环境。
+**无需构建，直接运行！** 镜像已在 GitHub Actions 自动构建并发布到 GitHub Container Registry。
 
-**一键启动：**
 ```bash
-# 生产环境
-./docker-start.sh
+# 1. 克隆项目
+git clone https://github.com/sea-t/ps_html_public.git
+cd ps_html_public/snippet-manager
 
-# 开发环境
+# 2. 一键启动（自动拉取镜像）
+./docker-run.sh
+```
+
+访问：http://localhost
+
+**镜像信息：**
+- 前端: `ghcr.io/sea-t/ps_html_public/snippet-manager-frontend:latest`
+- 后端: `ghcr.io/sea-t/ps_html_public/snippet-manager-backend:latest`
+
+**详细说明**: 查看 [INSTALL.md](./INSTALL.md) 📖
+
+---
+
+### 🐳 Docker 本地构建部署
+
+如果你想从源码构建镜像：
+
+**生产环境：**
+```bash
+./docker-start.sh
+```
+
+**开发环境：**
+```bash
 ./docker-start-dev.sh
 ```
 
@@ -271,28 +295,37 @@ POST /api/snippets
 ## 开发计划
 
 **已完成：**
+- [x] 完整的前后端功能
 - [x] Docker 容器化部署
+- [x] GitHub Actions CI/CD 自动构建
+- [x] 预构建镜像发布到 GitHub Container Registry
 - [x] 生产环境 Nginx 配置
 - [x] 开发环境热重载支持
 - [x] 健康检查和自动重启
 - [x] 数据持久化
+- [x] 一键启动脚本
 
 **计划中：**
 - [ ] 支持 Markdown 格式
 - [ ] 片段分享功能
-- [ ] 导入/导出功能
+- [ ] 导入/导出功能（JSON/CSV）
 - [ ] 用户认证系统
 - [ ] 片段版本控制
 - [ ] 收藏夹功能
 - [ ] 暗色主题
 - [ ] Kubernetes 部署配置
+- [ ] 多语言界面
 
 ## 文档索引
 
-- 📖 [README.md](./README.md) - 项目介绍和功能说明
-- 🚀 [QUICKSTART.md](./QUICKSTART.md) - 传统方式快速开始
-- 🐳 [DOCKER.md](./DOCKER.md) - Docker 部署完整指南
-- 💻 [DEVELOPMENT.md](./DEVELOPMENT.md) - 开发文档和规范
+| 文档 | 说明 | 适用场景 |
+|------|------|---------|
+| 📖 [README.md](./README.md) | 项目介绍和功能说明 | 了解项目 |
+| ⚡ [INSTALL.md](./INSTALL.md) | 预构建镜像快速安装 | **推荐首选** ⭐ |
+| 🐳 [DOCKER.md](./DOCKER.md) | Docker 完整部署指南 | 深入了解 Docker |
+| 📋 [DOCKER-CHEATSHEET.md](./DOCKER-CHEATSHEET.md) | Docker 快速参考 | 日常使用 |
+| 🚀 [QUICKSTART.md](./QUICKSTART.md) | 传统方式快速开始 | 手动部署 |
+| 💻 [DEVELOPMENT.md](./DEVELOPMENT.md) | 开发文档和规范 | 二次开发 |
 
 ## 贡献
 
