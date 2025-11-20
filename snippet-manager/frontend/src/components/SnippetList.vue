@@ -13,7 +13,7 @@
           <div class="card-header">
             <div class="title-section">
               <el-icon v-if="snippet.snippet_type === 'code'" color="#409EFF">
-                <Code />
+                <Document />
               </el-icon>
               <el-icon v-else color="#E6A23C">
                 <ChatDotRound />
@@ -74,12 +74,12 @@
 </template>
 
 <script>
-import { Code, ChatDotRound, View, Edit, Delete } from '@element-plus/icons-vue'
+import { Document, ChatDotRound, View, Edit, Delete } from '@element-plus/icons-vue'
 
 export default {
   name: 'SnippetList',
   components: {
-    Code,
+    Document,
     ChatDotRound,
     View,
     Edit,
