@@ -38,18 +38,9 @@ export default defineConfig({
       output: {
         // 更精细的 chunk 分割
         manualChunks: (id) => {
-          // Vue 核心
-          if (id.includes('node_modules/vue')) {
-            return 'vue-core'
-          }
-
-          // Element Plus 核心
+          // Element Plus 完整库（避免分割导致初始化顺序问题）
           if (id.includes('node_modules/element-plus')) {
-            // Element Plus 组件分离
-            if (id.includes('element-plus/es/components')) {
-              return 'element-plus-components'
-            }
-            return 'element-plus-core'
+            return 'element-plus'
           }
 
           // Element Plus 图标
