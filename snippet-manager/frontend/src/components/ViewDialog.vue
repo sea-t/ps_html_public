@@ -27,16 +27,69 @@
       <div class="content-section">
         <div class="content-header">
           <h3>内容</h3>
-          <el-button
-            type="primary"
-            size="small"
-            @click="copyContent"
-          >
-            <el-icon><CopyDocument /></el-icon>
-            复制
-          </el-button>
+          <div class="header-actions">
+            <el-button-group v-if="snippet.snippet_type === 'prompt' && showMarkdownToggle">
+              <el-button
+                :type="viewMode === 'raw' ? 'primary' : ''"
+                size="small"
+                @click="viewMode = 'raw'"
+              >
+                源码
+              </el-button>
+              <el-button
+                :type="viewMode === 'rendered' ? 'primary' : ''"
+                size="small"
+                @click="viewMode = 'rendered'"
+              >
+                预览
+              </el-button>
+            </el-button-group>
+            <el-button
+              type="primary"
+              size="small"
+              @click="copyContent"
+              style="margin-left: 10px;"
+            >
+              <el-icon><CopyDocument /></el-icon>
+              复制
+            </el-button>
+
+            <el-dropdown style="margin-left: 10px;" @command="handleShare">
+              <el-button type="success" size="small">
+                <el-icon><Share /></el-icon>
+                分享
+              </el-button>
+              <template #dropdown>
+                <el-dropdown-menu>
+                  <el-dropdown-item command="markdown">复制为 Markdown</el-dropdown-item>
+                  <el-dropdown-item command="text">复制为纯文本</el-dropdown-item>
+                  <el-dropdown-item command="share">生成分享文本</el-dropdown-item>
+                </el-dropdown-menu>
+              </template>
+            </el-dropdown>
+
+            <el-dropdown style="margin-left: 10px;" @command="handleDownload">
+              <el-button type="warning" size="small">
+                <el-icon><Download /></el-icon>
+                下载
+              </el-button>
+              <template #dropdown>
+                <el-dropdown-menu>
+                  <el-dropdown-item command="json">下载为 JSON</el-dropdown-item>
+                  <el-dropdown-item command="md">下载为 Markdown</el-dropdown-item>
+                  <el-dropdown-item command="txt">下载为文本</el-dropdown-item>
+                  <el-dropdown-item v-if="snippet.snippet_type === 'code'" command="code">下载源代码</el-dropdown-item>
+                </el-dropdown-menu>
+              </template>
+            </el-dropdown>
+          </div>
         </div>
-        <pre class="content-display"><code :class="'language-' + snippet.language">{{ snippet.content }}</code></pre>
+
+        <!-- 代码片段或原始视图 -->
+        <pre v-if="snippet.snippet_type === 'code' || viewMode === 'raw'" class="content-display"><code :class="'language-' + snippet.language">{{ snippet.content }}</code></pre>
+
+        <!-- Markdown 渲染视图 -->
+        <div v-else-if="snippet.snippet_type === 'prompt' && viewMode === 'rendered'" class="markdown-content" v-html="renderedMarkdown"></div>
       </div>
 
       <div class="time-info">
@@ -52,16 +105,20 @@
 </template>
 
 <script>
-import { ref, watch } from 'vue'
+import { ref, watch, computed } from 'vue'
 import { ElMessage } from 'element-plus'
-import { CopyDocument } from '@element-plus/icons-vue'
+import { CopyDocument, Share, Download } from '@element-plus/icons-vue'
 import hljs from 'highlight.js'
 import 'highlight.js/styles/github-dark.css'
+import { renderMarkdown, hasMarkdownSyntax } from '../utils/markdown'
+import { copyToClipboard, formatAsMarkdown, formatAsText, downloadSnippet, generateShareText } from '../utils/share'
 
 export default {
   name: 'ViewDialog',
   components: {
-    CopyDocument
+    CopyDocument,
+    Share,
+    Download
   },
   props: {
     modelValue: {
@@ -76,10 +133,30 @@ export default {
   emits: ['update:modelValue'],
   setup(props, { emit }) {
     const dialogVisible = ref(props.modelValue)
+    const viewMode = ref('raw') // 'raw' 或 'rendered'
+
+    // 检测是否显示 Markdown 切换按钮
+    const showMarkdownToggle = computed(() => {
+      if (!props.snippet || props.snippet.snippet_type !== 'prompt') {
+        return false
+      }
+      return hasMarkdownSyntax(props.snippet.content)
+    })
+
+    // 渲染 Markdown
+    const renderedMarkdown = computed(() => {
+      if (!props.snippet || !props.snippet.content) {
+        return ''
+      }
+      return renderMarkdown(props.snippet.content)
+    })
 
     watch(() => props.modelValue, (val) => {
       dialogVisible.value = val
       if (val && props.snippet) {
+        // 重置视图模式
+        viewMode.value = 'raw'
+
         // 延迟高亮代码
         setTimeout(() => {
           document.querySelectorAll('pre code').forEach((block) => {
@@ -111,11 +188,55 @@ export default {
       return date.toLocaleString('zh-CN')
     }
 
+    // 分享功能
+    const handleShare = async (format) => {
+      try {
+        let text
+        switch (format) {
+          case 'markdown':
+            text = formatAsMarkdown(props.snippet)
+            break
+          case 'text':
+            text = formatAsText(props.snippet)
+            break
+          case 'share':
+            text = generateShareText(props.snippet)
+            break
+          default:
+            text = props.snippet.content
+        }
+
+        const success = await copyToClipboard(text)
+        if (success) {
+          ElMessage.success('已复制到剪贴板')
+        } else {
+          ElMessage.error('复制失败')
+        }
+      } catch (error) {
+        ElMessage.error('复制失败')
+      }
+    }
+
+    // 下载功能
+    const handleDownload = (format) => {
+      try {
+        downloadSnippet(props.snippet, format)
+        ElMessage.success('下载成功')
+      } catch (error) {
+        ElMessage.error('下载失败')
+      }
+    }
+
     return {
       dialogVisible,
+      viewMode,
+      showMarkdownToggle,
+      renderedMarkdown,
       handleClose,
       copyContent,
-      formatDate
+      formatDate,
+      handleShare,
+      handleDownload
     }
   }
 }
@@ -176,5 +297,140 @@ export default {
   margin-top: 20px;
   font-size: 12px;
   color: #909399;
+}
+
+.header-actions {
+  display: flex;
+  align-items: center;
+}
+
+/* Markdown 渲染样式 */
+.markdown-content {
+  padding: 20px;
+  background: var(--bg-secondary, #f5f7fa);
+  border-radius: 4px;
+  max-height: 500px;
+  overflow-y: auto;
+  line-height: 1.6;
+}
+
+.markdown-content h1,
+.markdown-content h2,
+.markdown-content h3,
+.markdown-content h4,
+.markdown-content h5,
+.markdown-content h6 {
+  margin-top: 24px;
+  margin-bottom: 16px;
+  font-weight: 600;
+  line-height: 1.25;
+  color: var(--text-primary, #303133);
+}
+
+.markdown-content h1 {
+  font-size: 2em;
+  border-bottom: 1px solid var(--border-color, #e4e7ed);
+  padding-bottom: 0.3em;
+}
+
+.markdown-content h2 {
+  font-size: 1.5em;
+  border-bottom: 1px solid var(--border-color, #e4e7ed);
+  padding-bottom: 0.3em;
+}
+
+.markdown-content h3 {
+  font-size: 1.25em;
+}
+
+.markdown-content p {
+  margin-bottom: 16px;
+}
+
+.markdown-content ul,
+.markdown-content ol {
+  padding-left: 2em;
+  margin-bottom: 16px;
+}
+
+.markdown-content li {
+  margin-bottom: 4px;
+}
+
+.markdown-content pre {
+  background: #282c34;
+  color: #abb2bf;
+  padding: 16px;
+  border-radius: 6px;
+  overflow-x: auto;
+  margin-bottom: 16px;
+}
+
+.markdown-content code {
+  font-family: 'Courier New', Monaco, monospace;
+  font-size: 85%;
+  padding: 0.2em 0.4em;
+  margin: 0;
+  background: rgba(27, 31, 35, 0.05);
+  border-radius: 3px;
+}
+
+.markdown-content pre code {
+  background: transparent;
+  padding: 0;
+  font-size: 100%;
+}
+
+.markdown-content blockquote {
+  padding: 0 1em;
+  margin-bottom: 16px;
+  color: var(--text-secondary, #606266);
+  border-left: 0.25em solid var(--border-color, #e4e7ed);
+}
+
+.markdown-content table {
+  border-collapse: collapse;
+  width: 100%;
+  margin-bottom: 16px;
+}
+
+.markdown-content table th,
+.markdown-content table td {
+  padding: 6px 13px;
+  border: 1px solid var(--border-color, #e4e7ed);
+}
+
+.markdown-content table tr:nth-child(even) {
+  background: var(--hover-bg, #f5f7fa);
+}
+
+.markdown-content a {
+  color: #409eff;
+  text-decoration: none;
+}
+
+.markdown-content a:hover {
+  text-decoration: underline;
+}
+
+.markdown-content img {
+  max-width: 100%;
+  height: auto;
+}
+
+.markdown-content hr {
+  height: 0.25em;
+  padding: 0;
+  margin: 24px 0;
+  background-color: var(--border-color, #e4e7ed);
+  border: 0;
+}
+
+.markdown-content strong {
+  font-weight: 600;
+}
+
+.markdown-content em {
+  font-style: italic;
 }
 </style>

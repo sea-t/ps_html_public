@@ -20,7 +20,15 @@
               <el-tag type="info">总计: {{ stats.total }}</el-tag>
               <el-tag type="success">代码: {{ stats.code }}</el-tag>
               <el-tag type="warning">提示词: {{ stats.prompt }}</el-tag>
+              <el-tag type="danger">收藏: {{ stats.favorite }}</el-tag>
             </div>
+            <el-button
+              class="theme-toggle-btn"
+              :icon="isDarkTheme ? Sunny : Moon"
+              circle
+              @click="toggleTheme"
+              :title="isDarkTheme ? '切换到亮色主题' : '切换到暗色主题'"
+            />
             <div class="user-info">
               <el-dropdown>
                 <span class="user-name">
@@ -49,6 +57,7 @@
             :currentFilter="currentFilter"
             @filter-change="handleFilterChange"
             @add-snippet="showAddDialog"
+            @import-export="showImportExport"
           />
         </el-aside>
 
@@ -59,6 +68,7 @@
             @edit="handleEdit"
             @delete="handleDelete"
             @view="handleView"
+            @toggle-favorite="handleToggleFavorite"
           />
         </el-main>
       </el-container>
@@ -90,20 +100,29 @@
       v-model="viewDialogVisible"
       :snippet="viewSnippet"
     />
+
+    <!-- 导入/导出对话框 -->
+    <ImportExportDialog
+      v-model:visible="importExportDialogVisible"
+      :snippets="snippets"
+      @import-success="handleImportSuccess"
+    />
   </div>
 </template>
 
 <script>
 import { ref, onMounted, onUnmounted, computed } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { Document, User, SwitchButton } from '@element-plus/icons-vue'
+import { Document, User, SwitchButton, Moon, Sunny } from '@element-plus/icons-vue'
 import api from './api/snippets'
 import { authService } from './utils/auth'
+import { themeService } from './utils/theme'
 import Sidebar from './components/Sidebar.vue'
 import SnippetList from './components/SnippetList.vue'
 import SnippetDialog from './components/SnippetDialog.vue'
 import ViewDialog from './components/ViewDialog.vue'
 import LoginDialog from './components/LoginDialog.vue'
+import ImportExportDialog from './components/ImportExportDialog.vue'
 
 export default {
   name: 'App',
@@ -113,24 +132,29 @@ export default {
     SnippetDialog,
     ViewDialog,
     LoginDialog,
+    ImportExportDialog,
     Document,
     User,
-    SwitchButton
+    SwitchButton,
+    Moon,
+    Sunny
   },
   setup() {
     const snippets = ref([])
     const tags = ref([])
-    const stats = ref({ total: 0, code: 0, prompt: 0 })
+    const stats = ref({ total: 0, code: 0, prompt: 0, favorite: 0 })
     const loading = ref(false)
     const dialogVisible = ref(false)
     const viewDialogVisible = ref(false)
     const loginDialogVisible = ref(false)
+    const importExportDialogVisible = ref(false)
     const loginMode = ref('login')
     const currentSnippet = ref(null)
     const viewSnippet = ref(null)
     const dialogMode = ref('add')
     const currentFilter = ref({ type: 'all', search: '', tag: '' })
     const currentUser = ref(null)
+    const isDarkTheme = ref(false)
 
     // 检查登录状态
     const checkAuth = () => {
@@ -179,7 +203,7 @@ export default {
         currentUser.value = null
         snippets.value = []
         tags.value = []
-        stats.value = { total: 0, code: 0, prompt: 0 }
+        stats.value = { total: 0, code: 0, prompt: 0, favorite: 0 }
         ElMessage.success('已退出登录')
       } catch (error) {
         // 用户取消
@@ -237,7 +261,9 @@ export default {
       let result = snippets.value
 
       // 按类型过滤
-      if (currentFilter.value.type !== 'all') {
+      if (currentFilter.value.type === 'favorite') {
+        result = result.filter(s => s.is_favorite)
+      } else if (currentFilter.value.type !== 'all') {
         result = result.filter(s => s.snippet_type === currentFilter.value.type)
       }
 
@@ -327,7 +353,63 @@ export default {
       }
     }
 
+    // 切换收藏
+    const handleToggleFavorite = async (snippet) => {
+      try {
+        await api.toggleFavorite(snippet.id)
+        ElMessage.success(snippet.is_favorite ? '已取消收藏' : '已添加收藏')
+        loadSnippets()
+        loadStats()
+      } catch (error) {
+        ElMessage.error('操作失败')
+      }
+    }
+
+    // 切换主题
+    const toggleTheme = () => {
+      const newTheme = themeService.toggleTheme()
+      isDarkTheme.value = newTheme === 'dark'
+    }
+
+    // 显示导入/导出对话框
+    const showImportExport = () => {
+      importExportDialogVisible.value = true
+    }
+
+    // 处理导入成功
+    const handleImportSuccess = async (data) => {
+      try {
+        let successCount = 0
+        let errorCount = 0
+
+        for (const item of data) {
+          try {
+            await api.createSnippet(item)
+            successCount++
+          } catch (error) {
+            errorCount++
+            console.error('导入片段失败:', error)
+          }
+        }
+
+        if (successCount > 0) {
+          ElMessage.success(`成功导入 ${successCount} 个片段${errorCount > 0 ? `，${errorCount} 个失败` : ''}`)
+          loadSnippets()
+          loadTags()
+          loadStats()
+        } else {
+          ElMessage.error('导入失败')
+        }
+      } catch (error) {
+        ElMessage.error('导入失败: ' + error.message)
+      }
+    }
+
     onMounted(() => {
+      // 初始化主题
+      const theme = themeService.initTheme()
+      isDarkTheme.value = theme === 'dark'
+
       // 检查登录状态
       if (checkAuth()) {
         loadSnippets()
@@ -352,28 +434,62 @@ export default {
       dialogVisible,
       viewDialogVisible,
       loginDialogVisible,
+      importExportDialogVisible,
       loginMode,
       currentSnippet,
       viewSnippet,
       dialogMode,
       currentFilter,
       currentUser,
+      isDarkTheme,
       handleFilterChange,
       showAddDialog,
       showLogin,
       showRegister,
+      showImportExport,
       handleLoginSuccess,
       handleLogout,
       handleEdit,
       handleView,
       handleSave,
-      handleDelete
+      handleDelete,
+      handleToggleFavorite,
+      handleImportSuccess,
+      toggleTheme,
+      Moon,
+      Sunny
     }
   }
 }
 </script>
 
 <style>
+:root {
+  /* 亮色主题变量 */
+  --bg-color: #ffffff;
+  --bg-secondary: #f5f7fa;
+  --text-primary: #303133;
+  --text-secondary: #606266;
+  --text-tertiary: #909399;
+  --border-color: #e4e7ed;
+  --hover-bg: #f5f7fa;
+  --gradient-start: #667eea;
+  --gradient-end: #764ba2;
+}
+
+.dark-theme {
+  /* 暗色主题变量 */
+  --bg-color: #1a1a1a;
+  --bg-secondary: #2c2c2c;
+  --text-primary: #e0e0e0;
+  --text-secondary: #b0b0b0;
+  --text-tertiary: #808080;
+  --border-color: #404040;
+  --hover-bg: #3a3a3a;
+  --gradient-start: #4a5ba8;
+  --gradient-end: #5a3b72;
+}
+
 * {
   margin: 0;
   padding: 0;
@@ -384,10 +500,13 @@ export default {
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
   height: 100vh;
   overflow: hidden;
+  background: var(--bg-color);
+  color: var(--text-primary);
+  transition: background-color 0.3s, color 0.3s;
 }
 
 .el-header {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, var(--gradient-start) 0%, var(--gradient-end) 100%);
   color: white;
   display: flex;
   align-items: center;
@@ -441,15 +560,27 @@ export default {
 }
 
 .el-aside {
-  background: #f5f7fa;
-  border-right: 1px solid #e4e7ed;
+  background: var(--bg-secondary);
+  border-right: 1px solid var(--border-color);
   overflow-y: auto;
 }
 
 .el-main {
   padding: 20px;
-  background: #ffffff;
+  background: var(--bg-color);
   overflow-y: auto;
+}
+
+.theme-toggle-btn {
+  background: rgba(255, 255, 255, 0.2) !important;
+  border-color: rgba(255, 255, 255, 0.3) !important;
+  color: white !important;
+  transition: all 0.3s;
+}
+
+.theme-toggle-btn:hover {
+  background: rgba(255, 255, 255, 0.3) !important;
+  transform: scale(1.1);
 }
 
 /* 欢迎页面样式 */
@@ -458,7 +589,7 @@ export default {
   align-items: center;
   justify-content: center;
   min-height: 100vh;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, var(--gradient-start) 0%, var(--gradient-end) 100%);
 }
 
 .welcome-content {

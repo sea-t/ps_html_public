@@ -22,6 +22,18 @@
             </div>
             <div class="actions">
               <el-button
+                :type="snippet.is_favorite ? 'warning' : 'info'"
+                size="small"
+                circle
+                @click="$emit('toggle-favorite', snippet)"
+                :title="snippet.is_favorite ? '取消收藏' : '添加收藏'"
+              >
+                <el-icon>
+                  <StarFilled v-if="snippet.is_favorite" />
+                  <Star v-else />
+                </el-icon>
+              </el-button>
+              <el-button
                 type="primary"
                 size="small"
                 circle
@@ -74,7 +86,7 @@
 </template>
 
 <script>
-import { Document, ChatDotRound, View, Edit, Delete } from '@element-plus/icons-vue'
+import { Document, ChatDotRound, View, Edit, Delete, Star, StarFilled } from '@element-plus/icons-vue'
 
 export default {
   name: 'SnippetList',
@@ -83,7 +95,9 @@ export default {
     ChatDotRound,
     View,
     Edit,
-    Delete
+    Delete,
+    Star,
+    StarFilled
   },
   props: {
     snippets: {
@@ -95,7 +109,7 @@ export default {
       default: false
     }
   },
-  emits: ['edit', 'delete', 'view'],
+  emits: ['edit', 'delete', 'view', 'toggle-favorite'],
   setup() {
     const formatDate = (dateString) => {
       const date = new Date(dateString)

@@ -18,6 +18,7 @@ def get_snippets():
     snippet_type = request.args.get('type')
     search = request.args.get('search')
     tag = request.args.get('tag')
+    favorite = request.args.get('favorite')  # 'true' 或 'false'
 
     # 只查询当前用户的片段
     query = Snippet.query.filter_by(user_id=current_user_id)
@@ -40,6 +41,10 @@ def get_snippets():
     # 按标签过滤
     if tag:
         query = query.filter(Snippet.tags.like(f'%{tag}%'))
+
+    # 按收藏过滤
+    if favorite and favorite.lower() == 'true':
+        query = query.filter_by(is_favorite=True)
 
     snippets = query.order_by(Snippet.updated_at.desc()).all()
     return jsonify([snippet.to_dict() for snippet in snippets])
@@ -73,7 +78,8 @@ def create_snippet():
         description=data.get('description', ''),
         snippet_type=data.get('snippet_type', 'code'),
         language=data.get('language', ''),
-        tags=','.join(data.get('tags', [])) if isinstance(data.get('tags'), list) else data.get('tags', '')
+        tags=','.join(data.get('tags', [])) if isinstance(data.get('tags'), list) else data.get('tags', ''),
+        is_favorite=data.get('is_favorite', False)
     )
 
     db.session.add(snippet)
@@ -102,6 +108,9 @@ def update_snippet(id):
     if 'tags' in data:
         snippet.tags = ','.join(data['tags']) if isinstance(data['tags'], list) else data['tags']
 
+    if 'is_favorite' in data:
+        snippet.is_favorite = data['is_favorite']
+
     db.session.commit()
 
     return jsonify(snippet.to_dict())
@@ -120,6 +129,21 @@ def delete_snippet(id):
     db.session.commit()
 
     return '', 204
+
+@bp.route('/snippets/<int:id>/favorite', methods=['PATCH'])
+@jwt_required()
+def toggle_favorite(id):
+    """切换片段收藏状态"""
+    current_user_id = get_jwt_identity()
+    snippet = Snippet.query.filter_by(id=id, user_id=current_user_id).first()
+
+    if not snippet:
+        return jsonify({'error': '片段不存在或无权修改'}), 404
+
+    snippet.is_favorite = not snippet.is_favorite
+    db.session.commit()
+
+    return jsonify(snippet.to_dict())
 
 @bp.route('/tags', methods=['GET'])
 @jwt_required()
@@ -143,9 +167,11 @@ def get_stats():
     total = Snippet.query.filter_by(user_id=current_user_id).count()
     code_count = Snippet.query.filter_by(user_id=current_user_id, snippet_type='code').count()
     prompt_count = Snippet.query.filter_by(user_id=current_user_id, snippet_type='prompt').count()
+    favorite_count = Snippet.query.filter_by(user_id=current_user_id, is_favorite=True).count()
 
     return jsonify({
         'total': total,
         'code': code_count,
-        'prompt': prompt_count
+        'prompt': prompt_count,
+        'favorite': favorite_count
     })
