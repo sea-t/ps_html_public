@@ -1,6 +1,25 @@
 version: '3.8'
 
 services:
+  # PostgreSQL 数据库
+  postgres:
+    image: postgres:15-alpine
+    container_name: snippet-manager-postgres-dev
+    restart: unless-stopped
+    environment:
+      - POSTGRES_DB=snippets_dev
+      - POSTGRES_USER=snippets_user
+      - POSTGRES_PASSWORD=dev_password
+    volumes:
+      - ./data/postgres-dev:/var/lib/postgresql/data
+    networks:
+      - snippet-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U snippets_user"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
   # 后端服务（开发模式）
   backend:
     build:
@@ -15,12 +34,14 @@ services:
       - FLASK_APP=run.py
       - FLASK_DEBUG=1
       - SECRET_KEY=dev-secret-key
-      - DATABASE_URL=sqlite:///instance/snippets.db
+      - DATABASE_URL=postgresql://snippets_user:dev_password@postgres:5432/snippets_dev
+      - JWT_SECRET_KEY=dev-jwt-secret-key
     volumes:
       # 挂载代码以支持热重载
       - ./backend:/app
-      # 持久化数据库
-      - backend-data-dev:/app/instance
+    depends_on:
+      postgres:
+        condition: service_healthy
     networks:
       - snippet-network
     command: python run.py
@@ -45,10 +66,6 @@ services:
     networks:
       - snippet-network
     command: npm run dev
-
-volumes:
-  backend-data-dev:
-    driver: local
 
 networks:
   snippet-network:
