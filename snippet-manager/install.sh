@@ -4,8 +4,14 @@
 # 使用方法：
 #   wget -O install.sh https://raw.githubusercontent.com/sea-t/ps_html_public/main/snippet-manager/install.sh
 #   bash install.sh
+#   bash install.sh -p 8080  # 指定端口
+#   bash install.sh --port 8080  # 指定端口
 
 set -e  # 遇到错误立即退出
+
+# 默认配置
+FRONTEND_PORT=""  # 留空表示使用随机端口
+BACKEND_PORT=5000
 
 # 颜色定义
 RED='\033[0;31m'
@@ -38,6 +44,92 @@ print_header() {
     echo "║   版本: 1.0.0                              ║"
     echo "╚════════════════════════════════════════════╝"
     echo -e "${NC}"
+}
+
+# 显示帮助信息
+show_help() {
+    echo "使用方法: bash install.sh [选项]"
+    echo
+    echo "选项:"
+    echo "  -p, --port PORT    指定前端访问端口 (默认: 26527-26529 随机)"
+    echo "  -h, --help         显示此帮助信息"
+    echo
+    echo "示例:"
+    echo "  bash install.sh              # 使用随机端口 (26527-26529)"
+    echo "  bash install.sh -p 8080      # 使用 8080 端口"
+    echo "  bash install.sh --port 80    # 使用 80 端口"
+    echo
+    exit 0
+}
+
+# 生成随机端口 (26527-26529)
+generate_random_port() {
+    echo $((26527 + RANDOM % 3))
+}
+
+# 检查端口是否被占用
+check_port_available() {
+    local port=$1
+    if command_exists netstat; then
+        netstat -tuln 2>/dev/null | grep -q ":$port " && return 1
+    elif command_exists ss; then
+        ss -tuln 2>/dev/null | grep -q ":$port " && return 1
+    elif command_exists lsof; then
+        lsof -i ":$port" >/dev/null 2>&1 && return 1
+    fi
+    return 0
+}
+
+# 选择可用端口
+select_available_port() {
+    # 如果用户指定了端口
+    if [ -n "$FRONTEND_PORT" ]; then
+        if check_port_available "$FRONTEND_PORT"; then
+            print_success "使用指定端口: $FRONTEND_PORT"
+            return
+        else
+            print_warning "端口 $FRONTEND_PORT 已被占用"
+            print_info "尝试自动选择可用端口..."
+        fi
+    fi
+
+    # 尝试在 26527-26529 范围内找到可用端口
+    for port in 26527 26528 26529; do
+        if check_port_available "$port"; then
+            FRONTEND_PORT=$port
+            print_success "自动选择端口: $FRONTEND_PORT"
+            return
+        fi
+    done
+
+    # 如果都被占用，生成一个更高的随机端口
+    FRONTEND_PORT=$((27000 + RANDOM % 1000))
+    print_warning "26527-26529 端口都被占用，使用随机端口: $FRONTEND_PORT"
+}
+
+# 解析命令行参数
+parse_args() {
+    while [[ $# -gt 0 ]]; do
+        case $1 in
+            -p|--port)
+                FRONTEND_PORT="$2"
+                if ! [[ "$FRONTEND_PORT" =~ ^[0-9]+$ ]] || [ "$FRONTEND_PORT" -lt 1 ] || [ "$FRONTEND_PORT" -gt 65535 ]; then
+                    print_error "无效的端口号: $FRONTEND_PORT"
+                    print_info "端口号必须在 1-65535 之间"
+                    exit 1
+                fi
+                shift 2
+                ;;
+            -h|--help)
+                show_help
+                ;;
+            *)
+                print_error "未知参数: $1"
+                echo "使用 -h 或 --help 查看帮助信息"
+                exit 1
+                ;;
+        esac
+    done
 }
 
 # 检查命令是否存在
@@ -141,8 +233,9 @@ create_project_dir() {
 # 创建 docker-compose.yml
 create_docker_compose() {
     print_info "创建 docker-compose.yml 配置文件..."
+    print_info "前端端口: $FRONTEND_PORT"
 
-    cat > docker-compose.yml <<'EOF'
+    cat > docker-compose.yml <<EOF
 version: '3.8'
 
 # Snippet Manager 生产环境配置
@@ -154,11 +247,11 @@ services:
     container_name: snippet-manager-backend
     restart: unless-stopped
     ports:
-      - "5000:5000"
+      - "$BACKEND_PORT:5000"
     environment:
       - FLASK_ENV=production
       - FLASK_APP=run.py
-      - SECRET_KEY=${SECRET_KEY:-your-secret-key-change-in-production}
+      - SECRET_KEY=\${SECRET_KEY:-your-secret-key-change-in-production}
       - DATABASE_URL=sqlite:///instance/snippets.db
     volumes:
       # 持久化数据库
@@ -178,7 +271,7 @@ services:
     container_name: snippet-manager-frontend
     restart: unless-stopped
     ports:
-      - "80:80"
+      - "$FRONTEND_PORT:80"
     depends_on:
       - backend
     networks:
@@ -305,8 +398,12 @@ show_access_info() {
     echo -e "${NC}"
     echo
     echo -e "${BLUE}访问地址：${NC}"
-    echo -e "  本地访问:   ${GREEN}http://localhost${NC}"
-    echo -e "  远程访问:   ${GREEN}http://$SERVER_IP${NC}"
+    echo -e "  本地访问:   ${GREEN}http://localhost:$FRONTEND_PORT${NC}"
+    echo -e "  远程访问:   ${GREEN}http://$SERVER_IP:$FRONTEND_PORT${NC}"
+    echo
+    echo -e "${BLUE}端口配置：${NC}"
+    echo -e "  前端端口:   ${GREEN}$FRONTEND_PORT${NC}"
+    echo -e "  后端端口:   ${GREEN}$BACKEND_PORT${NC}"
     echo
     echo -e "${BLUE}常用命令：${NC}"
     echo -e "  查看日志:   ${YELLOW}cd $PROJECT_DIR && $COMPOSE_CMD logs -f${NC}"
@@ -322,7 +419,7 @@ show_access_info() {
     echo -e "  环境变量:   ${GREEN}$PROJECT_DIR/.env${NC}"
     echo -e "  数据持久化: ${GREEN}Docker Volume (backend-data)${NC}"
     echo
-    echo -e "${YELLOW}提示：如果无法访问，请检查防火墙设置（需要开放 80 端口）${NC}"
+    echo -e "${YELLOW}提示：如果无法访问，请检查防火墙设置（需要开放 $FRONTEND_PORT 端口）${NC}"
     echo
 }
 
@@ -334,6 +431,9 @@ main() {
     check_docker
     check_docker_compose
     check_architecture
+
+    # 选择可用端口
+    select_available_port
 
     # 创建项目
     create_project_dir
@@ -354,5 +454,6 @@ main() {
     print_success "部署完成！享受使用 Snippet Manager 吧！"
 }
 
-# 运行主函数
+# 解析参数并运行主函数
+parse_args "$@"
 main
