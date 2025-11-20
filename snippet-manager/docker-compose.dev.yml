@@ -19,8 +19,8 @@ services:
     volumes:
       # 挂载代码以支持热重载
       - ./backend:/app
-      # 持久化数据库
-      - backend-data-dev:/app/instance
+      # 持久化数据库 - 挂载到宿主机真实路径
+      - ./data/database:/app/instance
     networks:
       - snippet-network
     command: python run.py
@@ -45,10 +45,6 @@ services:
     networks:
       - snippet-network
     command: npm run dev
-
-volumes:
-  backend-data-dev:
-    driver: local
 
 networks:
   snippet-network:

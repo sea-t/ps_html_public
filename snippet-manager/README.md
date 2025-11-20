@@ -44,6 +44,8 @@ curl -fsSL https://raw.githubusercontent.com/sea-t/ps_html_public/main/snippet-m
 - RESTful API 设计
 - 响应式界面设计
 - 实时数据统计
+- 💾 **数据库持久化到宿主机** - 升级不丢失数据
+- 🧪 **全面的测试覆盖** - 20+ 测试用例，覆盖所有API
 
 ## 技术栈
 
@@ -71,23 +73,34 @@ snippet-manager/
 │   ├── instance/           # 数据库文件目录
 │   ├── config.py           # 配置文件
 │   ├── run.py              # 启动文件
+│   ├── test_api.py         # 后端单元测试
 │   ├── requirements.txt    # Python依赖
+│   ├── requirements-test.txt # 测试依赖
 │   └── .env.example        # 环境变量示例
 │
-└── frontend/               # 前端代码
-    ├── src/
-    │   ├── components/     # Vue组件
-    │   │   ├── Sidebar.vue         # 侧边栏
-    │   │   ├── SnippetList.vue     # 片段列表
-    │   │   ├── SnippetDialog.vue   # 编辑对话框
-    │   │   └── ViewDialog.vue      # 查看对话框
-    │   ├── api/            # API接口
-    │   │   └── snippets.js
-    │   ├── App.vue         # 主应用组件
-    │   └── main.js         # 应用入口
-    ├── index.html
-    ├── vite.config.js
-    └── package.json
+├── frontend/               # 前端代码
+│   ├── src/
+│   │   ├── components/     # Vue组件
+│   │   │   ├── Sidebar.vue         # 侧边栏
+│   │   │   ├── SnippetList.vue     # 片段列表
+│   │   │   ├── SnippetDialog.vue   # 编辑对话框
+│   │   │   └── ViewDialog.vue      # 查看对话框
+│   │   ├── api/            # API接口
+│   │   │   └── snippets.js
+│   │   ├── App.vue         # 主应用组件
+│   │   └── main.js         # 应用入口
+│   ├── index.html
+│   ├── vite.config.js
+│   └── package.json
+│
+├── tests/                  # 集成测试
+│   └── test_integration.py
+│
+├── data/                   # 数据持久化目录
+│   └── database/           # 数据库文件（自动创建）
+│       └── snippets.db
+│
+└── run-tests.sh            # 测试运行脚本
 ```
 
 ## 快速开始
@@ -328,8 +341,10 @@ POST /api/snippets
 - [x] 生产环境 Nginx 配置
 - [x] 开发环境热重载支持
 - [x] 健康检查和自动重启
-- [x] 数据持久化
+- [x] 数据库持久化到宿主机
 - [x] 一键启动脚本
+- [x] 全面的测试套件（20+ 测试用例）
+- [x] 完整的文档体系
 
 **计划中：**
 - [ ] 支持 Markdown 格式
@@ -342,6 +357,46 @@ POST /api/snippets
 - [ ] Kubernetes 部署配置
 - [ ] 多语言界面
 
+## 测试
+
+本项目包含全面的测试套件，覆盖所有API端点和核心功能。
+
+### 运行测试
+
+```bash
+# 运行所有测试
+./run-tests.sh
+
+# 只运行单元测试
+./run-tests.sh unit
+
+# 只运行集成测试（需要服务运行）
+./run-tests.sh integration
+
+# 测试数据库挂载
+./run-tests.sh database
+```
+
+### 测试覆盖
+
+- ✅ **20+ 测试用例** - 覆盖所有API端点
+- ✅ **CRUD操作** - 创建、读取、更新、删除
+- ✅ **搜索和过滤** - 多条件搜索测试
+- ✅ **边界情况** - 错误处理和异常情况
+- ✅ **数据持久化** - 数据库操作测试
+
+**详细文档**: 查看 [TESTING.md](./TESTING.md) 🧪
+
+## 数据库持久化
+
+数据库文件现在挂载到宿主机真实路径 `./data/database/`，确保：
+
+- ✅ **升级安全** - 容器更新不会影响数据
+- ✅ **数据可见** - 可直接访问和备份数据库文件
+- ✅ **易于迁移** - 复制 `data/` 目录即可迁移数据
+
+**详细文档**: 查看 [DATABASE-SETUP.md](./DATABASE-SETUP.md) 💾
+
 ## 文档索引
 
 | 文档 | 说明 | 适用场景 |
@@ -352,6 +407,8 @@ POST /api/snippets
 | 📋 [DOCKER-CHEATSHEET.md](./DOCKER-CHEATSHEET.md) | Docker 快速参考 | 日常使用 |
 | 🚀 [QUICKSTART.md](./QUICKSTART.md) | 传统方式快速开始 | 手动部署 |
 | 💻 [DEVELOPMENT.md](./DEVELOPMENT.md) | 开发文档和规范 | 二次开发 |
+| 🧪 [TESTING.md](./TESTING.md) | 测试文档和指南 | 运行测试 |
+| 💾 [DATABASE-SETUP.md](./DATABASE-SETUP.md) | 数据库配置说明 | 数据管理 |
 
 ## 贡献
 

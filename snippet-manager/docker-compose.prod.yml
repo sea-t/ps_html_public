@@ -17,8 +17,8 @@ services:
       - SECRET_KEY=${SECRET_KEY:-your-secret-key-change-in-production}
       - DATABASE_URL=sqlite:///instance/snippets.db
     volumes:
-      # 持久化数据库
-      - backend-data:/app/instance
+      # 持久化数据库 - 挂载到宿主机真实路径
+      - ./data/database:/app/instance
     networks:
       - snippet-network
     healthcheck:
@@ -45,11 +45,6 @@ services:
       timeout: 10s
       retries: 3
       start_period: 40s
-
-volumes:
-  # 后端数据持久化
-  backend-data:
-    driver: local
 
 networks:
   snippet-network:
