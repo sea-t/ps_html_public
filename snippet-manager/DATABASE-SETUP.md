@@ -2,24 +2,49 @@
 
 ## 概述
 
-本项目已配置数据库文件持久化到宿主机真实路径，确保容器升级、重启或删除时数据不会丢失。
+本项目使用 PostgreSQL 15 作为数据库,并配置了数据持久化到宿主机真实路径，确保容器升级、重启或删除时数据不会丢失。
 
-## 配置详情
+## 数据库配置
+
+### PostgreSQL 版本
+- **镜像**: postgres:15-alpine
+- **容器端口**: 5432
+- **主机端口**: 26526 (自定义端口，避免与系统 PostgreSQL 冲突)
+
+### 端口映射说明
+
+为了避免与系统已安装的 PostgreSQL（默认端口 5432）冲突，容器的 5432 端口被映射到主机的 **26526** 端口。
+
+**重要**:
+- 容器内服务间通信仍使用 `postgres:5432`
+- 从主机访问数据库时使用 `localhost:26526`
+
+**服务端口配置**:
+- 数据库: `localhost:26526`
+- 后端 API: `localhost:26528`
+- 前端应用: `localhost:26527`
 
 ### 数据库位置
 
-- **容器内路径**: `/app/instance/snippets.db`
-- **宿主机路径**: `./data/database/snippets.db`
+- **容器内路径**: `/var/lib/postgresql/data`
+- **宿主机路径**: `./data/postgres/` (生产环境) 或 `./data/postgres-dev/` (开发环境)
 - **映射方式**: Docker bind mount
 
 ### Docker Compose 配置
 
-所有 docker-compose 文件已配置数据库挂载:
+所有 docker-compose 文件已配置数据库挂载和端口映射:
 
 ```yaml
-volumes:
-  # 持久化数据库 - 挂载到宿主机真实路径
-  - ./data/database:/app/instance
+postgres:
+  image: postgres:15-alpine
+  ports:
+    - "26526:5432"  # 主机端口 26526 映射到容器端口 5432
+  volumes:
+    - ./data/postgres:/var/lib/postgresql/data
+  environment:
+    - POSTGRES_DB=${POSTGRES_DB:-snippets}
+    - POSTGRES_USER=${POSTGRES_USER:-snippets_user}
+    - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-change-this-password}
 ```
 
 这个配置应用于:
@@ -31,7 +56,7 @@ volumes:
 
 ### 优势
 
-1. **升级安全**: 更新应用版本时，数据库文件保留在宿主机上
+1. **升级安全**: 更新应用版本时，数据库数据保留在宿主机上
 2. **数据可见**: 可以直接在宿主机上查看和备份数据库文件
 3. **容器独立**: 删除容器不会影响数据
 4. **易于迁移**: 直接复制 `data/` 目录即可迁移数据
@@ -41,8 +66,10 @@ volumes:
 ```
 snippet-manager/
 ├── data/                      # 数据目录（不会被git追踪）
-│   └── database/             # 数据库目录
-│       └── snippets.db       # SQLite数据库文件
+│   ├── postgres/             # 生产环境数据库目录
+│   │   └── ...               # PostgreSQL数据文件
+│   └── postgres-dev/         # 开发环境数据库目录
+│       └── ...               # PostgreSQL数据文件
 ```
 
 ## 使用说明
@@ -53,40 +80,92 @@ snippet-manager/
 
 ```bash
 cd snippet-manager
-./docker-start.sh
+docker compose up -d
 ```
 
-数据库目录会自动创建在 `./data/database/` 下。
+数据库目录会自动创建在 `./data/postgres/` 下。
+
+### 从主机连接数据库
+
+使用数据库客户端工具连接：
+
+```bash
+# 使用 psql 连接
+psql -h localhost -p 26526 -U snippets_user -d snippets
+
+# 使用 pgAdmin 或其他 GUI 工具
+# Host: localhost
+# Port: 26526
+# Username: snippets_user
+# Database: snippets
+```
 
 ### 查看数据库文件
 
 ```bash
-# 查看数据库文件
-ls -lh ./data/database/
+# 查看数据库目录
+ls -lh ./data/postgres/
 
 # 查看数据库大小
-du -h ./data/database/snippets.db
+du -sh ./data/postgres/
 ```
 
 ### 备份数据库
 
+#### 方法 1: 使用 pg_dump（推荐）
+
 ```bash
+# 导出SQL格式备份
+docker compose exec postgres pg_dump -U snippets_user snippets > backups/snippets-$(date +%Y%m%d-%H%M%S).sql
+
+# 导出压缩格式备份
+docker compose exec postgres pg_dump -U snippets_user -Fc snippets > backups/snippets-$(date +%Y%m%d-%H%M%S).dump
+```
+
+#### 方法 2: 直接复制数据目录
+
+```bash
+# 先停止服务
+docker compose down
+
 # 创建备份
 mkdir -p backups
-cp -r data/database backups/database-$(date +%Y%m%d-%H%M%S)
+cp -r data/postgres backups/postgres-$(date +%Y%m%d-%H%M%S)
 
 # 或使用tar压缩
-tar -czf backups/database-$(date +%Y%m%d-%H%M%S).tar.gz data/database/
+tar -czf backups/postgres-$(date +%Y%m%d-%H%M%S).tar.gz data/postgres/
+
+# 重新启动服务
+docker compose up -d
 ```
 
 ### 恢复数据库
 
+#### 从 SQL 备份恢复
+
 ```bash
+# 恢复 SQL 格式备份
+docker compose exec -T postgres psql -U snippets_user snippets < backups/snippets-YYYYMMDD-HHMMSS.sql
+
+# 恢复压缩格式备份
+docker compose exec -T postgres pg_restore -U snippets_user -d snippets -c backups/snippets-YYYYMMDD-HHMMSS.dump
+```
+
+#### 从数据目录恢复
+
+```bash
+# 停止服务
+docker compose down
+
 # 从备份恢复
-cp backups/database-YYYYMMDD-HHMMSS/snippets.db data/database/
+rm -rf data/postgres
+cp -r backups/postgres-YYYYMMDD-HHMMSS data/postgres
 
 # 或从tar包恢复
-tar -xzf backups/database-YYYYMMDD-HHMMSS.tar.gz
+tar -xzf backups/postgres-YYYYMMDD-HHMMSS.tar.gz
+
+# 重新启动服务
+docker compose up -d
 ```
 
 ### 重置数据库
@@ -94,14 +173,14 @@ tar -xzf backups/database-YYYYMMDD-HHMMSS.tar.gz
 如果需要清空数据库：
 
 ```bash
-# 停止服务
-./docker-stop.sh
+# 方法 1: 使用 Docker 卷重置
+docker compose down -v  # -v 参数会删除数据卷
+docker compose up -d
 
-# 删除数据库文件
-rm -rf data/database/snippets.db
-
-# 重新启动服务（会创建新的空数据库）
-./docker-start.sh
+# 方法 2: 手动删除数据目录
+docker compose down
+rm -rf data/postgres/
+docker compose up -d
 ```
 
 ## 升级流程
@@ -110,17 +189,17 @@ rm -rf data/database/snippets.db
 
 ```bash
 # 1. 停止当前服务
-./docker-stop.sh
+docker compose down
 
 # 2. 拉取最新代码或镜像
 git pull
 # 或
-docker-compose -f docker-compose.prod.yml pull
+docker compose -f docker-compose.prod.yml pull
 
 # 3. 启动新版本
-./docker-start.sh
+docker compose up -d
 
-# 数据库文件会自动保留在 data/database/ 目录中
+# 数据库文件会自动保留在 data/postgres/ 目录中
 ```
 
 ## 迁移到新服务器
@@ -136,52 +215,47 @@ scp snippet-data-backup.tar.gz user@newserver:/path/to/
 # 在新服务器上
 cd /path/to/snippet-manager
 tar -xzf ../snippet-data-backup.tar.gz
-./docker-start.sh
+docker compose up -d
 ```
 
 ## 注意事项
 
-1. **权限问题**: 确保容器有权限读写宿主机的数据库目录
-2. **备份重要性**: 定期备份 `data/` 目录
-3. **版本兼容**: 升级应用时注意数据库架构兼容性
-4. **不要追踪**: `data/` 目录已加入 `.gitignore`，不会被 git 追踪
+1. **端口配置**: PostgreSQL 映射到主机 26526 端口，后端 26528，前端 26527，避免端口冲突
+2. **权限问题**: 确保容器有权限读写宿主机的数据库目录
+3. **备份重要性**: 定期备份 `data/` 目录
+4. **版本兼容**: 升级应用时注意数据库架构兼容性
+5. **不要追踪**: `data/` 目录已加入 `.gitignore`，不会被 git 追踪
+6. **密码安全**: 生产环境务必修改默认的数据库密码
 
-## 技术细节
+## 环境变量配置
 
-### Bind Mount vs Docker Volume
+在 `.env` 文件中配置数据库参数：
 
-之前使用 Docker volume:
-```yaml
-volumes:
-  - backend-data:/app/instance  # Docker管理的volume
+```bash
+# PostgreSQL 配置
+POSTGRES_DB=snippets
+POSTGRES_USER=snippets_user
+POSTGRES_PASSWORD=your-secure-password-here
+
+# Backend 会自动使用这些环境变量
+DATABASE_URL=postgresql://snippets_user:your-secure-password-here@postgres:5432/snippets
 ```
-
-现在使用 bind mount:
-```yaml
-volumes:
-  - ./data/database:/app/instance  # 宿主机路径
-```
-
-**Bind mount 的优势**:
-- 路径明确，易于查找和管理
-- 可以直接在宿主机上访问和备份
-- 升级、迁移更方便
 
 ## 故障排查
 
-### 数据库文件不存在
+### 数据库连接失败
 
-如果容器启动后数据库文件没有创建：
+如果后端无法连接数据库：
 
 ```bash
-# 检查容器日志
-docker logs snippet-manager-backend
+# 检查 postgres 容器状态
+docker compose ps postgres
 
-# 检查目录权限
-ls -la data/database/
+# 查看 postgres 日志
+docker compose logs postgres
 
-# 手动创建目录
-mkdir -p data/database
+# 测试数据库健康检查
+docker compose exec postgres pg_isready -U snippets_user
 ```
 
 ### 权限错误
@@ -193,6 +267,7 @@ mkdir -p data/database
 ls -la data/
 
 # 修改权限（如果需要）
+sudo chown -R $USER:$USER data/
 chmod -R 755 data/
 ```
 
@@ -201,21 +276,59 @@ chmod -R 755 data/
 如果数据库损坏：
 
 ```bash
-# 使用 SQLite 检查
-sqlite3 data/database/snippets.db "PRAGMA integrity_check;"
+# 尝试使用 PostgreSQL 恢复工具
+docker compose exec postgres pg_resetwal /var/lib/postgresql/data
 
-# 如果损坏，从备份恢复
-cp backups/database-latest/snippets.db data/database/
+# 如果无法恢复，从备份恢复
+docker compose down
+rm -rf data/postgres
+cp -r backups/postgres-latest data/postgres
+docker compose up -d
+```
+
+### 端口已被占用
+
+如果 26526 端口也被占用，可以修改 docker-compose.yml 中的端口映射：
+
+```yaml
+postgres:
+  ports:
+    - "其他端口:5432"  # 使用其他可用端口
+```
+
+## 性能优化
+
+### PostgreSQL 配置调优
+
+在生产环境中，可以通过环境变量调整 PostgreSQL 配置：
+
+```yaml
+postgres:
+  environment:
+    - POSTGRES_INITDB_ARGS=-E UTF8 --locale=C
+    - POSTGRES_HOST_AUTH_METHOD=scram-sha-256
+  command:
+    - postgres
+    - -c
+    - max_connections=100
+    - -c
+    - shared_buffers=256MB
 ```
 
 ## 测试验证
 
-运行测试以验证数据库持久化：
+检查数据库是否正常工作：
 
 ```bash
-# 运行完整测试套件
-./run-tests.sh
+# 运行健康检查
+docker compose exec postgres pg_isready
 
-# 只测试数据库挂载
-./run-tests.sh database
+# 连接到数据库
+docker compose exec postgres psql -U snippets_user -d snippets
+
+# 查看数据库大小
+docker compose exec postgres psql -U snippets_user -d snippets -c "SELECT pg_size_pretty(pg_database_size('snippets'));"
+
+# 查看表列表
+docker compose exec postgres psql -U snippets_user -d snippets -c "\dt"
 ```
