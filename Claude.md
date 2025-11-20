@@ -2,6 +2,36 @@
 
 > 本文档帮助 AI 快速理解 ps_html_public 项目的架构、功能和工作流程
 
+## ⚠️ AI Agent 行为规范
+
+### 自动化 PR 链接输出
+
+**重要规则：** 当完成任务实现、代码提交并推送后，**必须主动输出** PR 创建链接，无需等待用户询问。
+
+**输出格式：**
+```
+✅ 任务已完成并推送！
+
+📝 创建 Pull Request：
+https://github.com/sea-t/ps_html_public/pull/new/{当前分支名}
+
+点击上方链接即可创建 PR
+```
+
+**触发条件：**
+- 完成代码实现
+- 已执行 `git commit`
+- 已执行 `git push`
+
+**示例：**
+如果当前分支是 `claude/feature-abc-123`，则自动输出：
+```
+✅ 任务已完成并推送！
+
+📝 创建 Pull Request：
+https://github.com/sea-t/ps_html_public/pull/new/claude/feature-abc-123
+```
+
 ## 项目概述
 
 **ps_html_public** 是一个轻量级的 HTML 导航页面项目，具备完整的自动化工程实践。项目采用纯原生技术栈（无框架依赖），展示了现代 Web 开发和 DevOps 自动化的最佳实践。
