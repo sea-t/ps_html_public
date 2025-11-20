@@ -1,5 +1,5 @@
-# Python 后端 Dockerfile
-FROM python:3.11-slim
+# Python 后端 Dockerfile - 优化版：避免编译，使用预编译包
+FROM python:3.11
 
 # 设置工作目录
 WORKDIR /app
@@ -9,17 +9,17 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
     FLASK_APP=run.py
 
-# 安装系统依赖
-RUN apt-get update && \
-    apt-get install -y --no-install-recommends gcc && \
-    rm -rf /var/lib/apt/lists/*
-
 # 复制依赖文件
 COPY requirements.txt .
 
-# 安装 Python 依赖
+# 安装 Python 依赖 - 强制使用预编译包
+# --prefer-binary: 优先使用预编译的 wheel
+# --only-binary: 对指定包强制使用二进制版本，避免编译
 RUN pip install --no-cache-dir --upgrade pip && \
-    pip install --no-cache-dir -r requirements.txt
+    pip install --no-cache-dir \
+        --prefer-binary \
+        --only-binary psycopg2-binary,bcrypt \
+        -r requirements.txt
 
 # 复制应用代码
 COPY . .
