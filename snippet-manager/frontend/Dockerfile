@@ -1,4 +1,4 @@
-# 前端 Dockerfile - 多阶段构建
+# 前端 Dockerfile - 多阶段构建 + BuildKit 缓存优化
 
 # 阶段 1: 构建阶段
 FROM node:18-alpine AS builder
@@ -14,7 +14,9 @@ COPY package*.json ./
 
 # 安装依赖（包括 devDependencies，构建时需要）
 # 使用 npm ci 确保依赖版本一致性和更快的安装速度
-RUN npm ci
+# 使用 BuildKit 缓存挂载加速重复构建
+RUN --mount=type=cache,target=/root/.npm \
+    npm ci
 
 # 复制源代码
 COPY . .
