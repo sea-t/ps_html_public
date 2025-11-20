@@ -12,5 +12,27 @@ export default defineConfig({
         changeOrigin: true
       }
     }
+  },
+  build: {
+    // 生产环境构建优化
+    minify: 'terser',
+    terserOptions: {
+      compress: {
+        drop_console: true, // 移除 console
+        drop_debugger: true
+      }
+    },
+    // 代码分割策略
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          'element-plus': ['element-plus'],
+          'vue-vendor': ['vue'],
+          'icons': ['@element-plus/icons-vue']
+        }
+      }
+    },
+    // chunk 大小警告阈值
+    chunkSizeWarningLimit: 1000
   }
 })

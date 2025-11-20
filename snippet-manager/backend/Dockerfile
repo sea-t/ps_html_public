@@ -30,9 +30,9 @@ RUN mkdir -p /app/instance
 # 暴露端口
 EXPOSE 5000
 
-# 健康检查
+# 健康检查 - 使用不需要认证的健康检查端点
 HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
-    CMD python -c "import requests; requests.get('http://localhost:5000/api/stats')" || exit 1
+    CMD python -c "import requests; requests.get('http://localhost:5000/api/health')" || exit 1
 
 # 启动应用
 CMD ["python", "run.py"]
