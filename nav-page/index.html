@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>我的导航页面</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <button class="theme-toggle" id="theme-toggle" title="切换主题">
+        <span id="theme-icon">🌙</span>
+    </button>
+
+    <div class="container">
+        <aside class="sidebar">
+            <header>
+                <h1 id="page-title">我的导航页面</h1>
+            </header>
+
+            <div class="search-box">
+                <input type="text" id="search-input" placeholder="🔍 搜索...">
+            </div>
+
+            <nav class="category-nav" id="category-nav">
+                <!-- 分类列表将动态加载 -->
+            </nav>
+        </aside>
+
+        <main class="main-content">
+            <div id="loading" class="loading">
+                加载中...
+            </div>
+
+            <div id="no-results" class="no-results">
+                没有找到匹配的结果
+            </div>
+
+            <div id="content-area">
+                <!-- 内容将动态加载 -->
+            </div>
+        </main>
+    </div>
+
+    <script type="module" src="js/main.js"></script>
+</body>
+</html>

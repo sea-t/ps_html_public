@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Docker 容器信息分析器</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>
+                <span>🐳</span>
+                <span>Docker 容器信息分析器</span>
+            </h1>
+            <p class="subtitle">实时分析和管理您的 Docker 容器</p>
+        </div>
+
+        <div class="input-section">
+            <div class="input-header">
+                <h2>📋 输入 Docker 容器信息</h2>
+                <div class="input-actions">
+                    <button class="btn-small" onclick="clearInput()">清空</button>
+                    <button class="btn-small" onclick="loadExample()">加载示例</button>
+                </div>
+            </div>
+            <textarea id="dockerInput" placeholder="粘贴 docker ps 或 docker container ls 的输出内容..."></textarea>
+            <div class="button-group">
+                <button class="btn-primary" onclick="parseDockerOutput()">
+                    <span>🔍</span>
+                    <span>分析容器信息</span>
+                </button>
+                <button class="btn-secondary" onclick="exportData()">导出报告</button>
+            </div>
+        </div>
+
+        <div id="loading" class="loading">
+            <div class="spinner"></div>
+            <p style="margin-top: 20px; color: white;">正在分析容器信息...</p>
+        </div>
+
+        <div id="quickFilters" class="quick-filters">
+            <div class="filter-title">🎯 快速过滤</div>
+            <div class="filter-buttons">
+                <button class="filter-btn active" onclick="filterContainers('all')">全部</button>
+                <button class="filter-btn" onclick="filterContainers('healthy')">健康容器</button>
+                <button class="filter-btn" onclick="filterContainers('ports')">有端口映射</button>
+                <button class="filter-btn" onclick="filterContainers('maxkb')">MaxKB</button>
+                <button class="filter-btn" onclick="filterContainers('dify')">Dify</button>
+                <button class="filter-btn" onclick="filterContainers('database')">数据库</button>
+            </div>
+        </div>
+
+        <div id="alertsContainer" class="alerts-container"></div>
+
+        <div id="statsContainer" class="stats-grid"></div>
+
+        <div id="appGroupsContainer" class="app-groups" style="display: none;"></div>
+
+        <div id="portAnalysis" class="port-analysis" style="display: none;">
+            <h3>🔌 端口使用分析</h3>
+            <div id="portAnalysisContent"></div>
+        </div>
+
+        <div id="tableContainer" class="table-container" style="display: none;">
+            <div class="table-header">
+                <div class="table-title">📦 容器详细信息</div>
+                <div class="table-actions">
+                    <input type="text" id="searchInput" class="search-box" placeholder="搜索容器...">
+                    <div class="view-toggle">
+                        <button class="view-btn active" onclick="switchView('table')">表格</button>
+                        <button class="view-btn" onclick="switchView('group')">分组</button>
+                    </div>
+                </div>
+            </div>
+            <div class="table-wrapper">
+                <table id="containersTable">
+                    <thead>
+                        <tr>
+                            <th>容器名称</th>
+                            <th>容器 ID</th>
+                            <th>镜像</th>
+                            <th>命令</th>
+                            <th>创建时间</th>
+                            <th>状态</th>
+                            <th>端口映射</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tableBody">
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <script type="module" src="js/main.js"></script>
+</body>
+</html>
