@@ -6,7 +6,7 @@ FROM node:18-alpine AS builder
 WORKDIR /app
 
 # 设置环境变量
-ENV NODE_ENV=production
+# 注意: 不在构建阶段设置 NODE_ENV=production，以确保安装 devDependencies（vite 等构建工具）
 ENV NODE_OPTIONS=--max_old_space_size=4096
 
 # 复制 package 文件
