@@ -6,6 +6,8 @@ services:
     image: postgres:15-alpine
     container_name: snippet-manager-postgres-dev
     restart: unless-stopped
+    ports:
+      - "26526:5432"  # 映射到主机 26526 端口，避免与系统 PostgreSQL (5432) 冲突
     environment:
       - POSTGRES_DB=snippets_dev
       - POSTGRES_USER=snippets_user
@@ -28,7 +30,7 @@ services:
     container_name: snippet-manager-backend-dev
     restart: unless-stopped
     ports:
-      - "5000:5000"
+      - "26528:5000"
     environment:
       - FLASK_ENV=development
       - FLASK_APP=run.py
@@ -54,7 +56,7 @@ services:
     container_name: snippet-manager-frontend-dev
     restart: unless-stopped
     ports:
-      - "3000:3000"
+      - "26527:3000"
     environment:
       - VITE_API_URL=http://localhost:5000
     volumes:
