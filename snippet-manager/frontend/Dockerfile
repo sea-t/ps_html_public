@@ -5,17 +5,24 @@ FROM node:18-alpine AS builder
 
 WORKDIR /app
 
+# 设置环境变量
+ENV NODE_ENV=production
+ENV NODE_OPTIONS=--max_old_space_size=4096
+
 # 复制 package 文件
 COPY package*.json ./
 
-# 安装依赖
-RUN npm install
+# 安装依赖（包括 devDependencies，构建时需要）
+# 使用 npm ci 确保依赖版本一致性和更快的安装速度
+RUN npm ci
 
 # 复制源代码
 COPY . .
 
-# 构建生产版本
-RUN npm run build
+# 构建生产版本并验证输出
+RUN npm run build && \
+    echo "Build completed successfully!" && \
+    ls -la dist/ || echo "dist directory not found!"
 
 # 阶段 2: 生产阶段
 FROM nginx:alpine
