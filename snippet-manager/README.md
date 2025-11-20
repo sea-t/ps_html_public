@@ -2,6 +2,32 @@
 
 一个功能完整的代码片段和AI提示词管理工具，支持分类、搜索、标签管理等功能。
 
+## 🚀 快速开始
+
+### 一键部署（推荐）
+
+在服务器上运行以下命令即可完成部署：
+
+```bash
+wget -O install.sh https://raw.githubusercontent.com/sea-t/ps_html_public/main/snippet-manager/install.sh && bash install.sh
+```
+
+或使用 curl：
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/sea-t/ps_html_public/main/snippet-manager/install.sh | bash
+```
+
+部署完成后访问 `http://YOUR_SERVER_IP` 即可使用。
+
+📖 **详细说明**: 查看 [QUICK-DEPLOY.md](./QUICK-DEPLOY.md)
+
+### 其他安装方式
+
+- 📦 [Docker 部署](./DOCKER.md) - 使用 Docker Compose 手动部署
+- 💻 [本地开发](./DEVELOPMENT.md) - 设置开发环境
+- 🔧 [完整安装指南](./INSTALL.md) - 详细的安装步骤
+
 ## 功能特性
 
 ### 核心功能
