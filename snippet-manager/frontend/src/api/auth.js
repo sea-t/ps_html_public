@@ -1,6 +1,7 @@
 import axios from 'axios'
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000'
+// 使用相对路径，由 Nginx 代理到后端
+const API_URL = ''
 
 const authAPI = {
   // 注册
