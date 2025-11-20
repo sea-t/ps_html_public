@@ -18,7 +18,7 @@ export const authService = {
 
   // 获取refresh token
   getRefreshToken() {
-    return localStorage.setItem(REFRESH_TOKEN_KEY)
+    return localStorage.getItem(REFRESH_TOKEN_KEY)
   },
 
   // 保存用户信息

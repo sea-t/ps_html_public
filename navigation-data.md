@@ -6,7 +6,7 @@
 | Stack Overflow | https://stackoverflow.com | 程序员问答社区 |
 | VS Code | https://code.visualstudio.com | 流行的代码编辑器 |
 | MDN Web Docs | https://developer.mozilla.org | Web开发文档 |
-| Docker 容器分析器 | ./docker-analyzer.html | 分析和管理 Docker 容器的可视化工具 |
+| Docker 容器分析器 | ./docker-analyzer/ | 分析和管理 Docker 容器的可视化工具 |
 
 # 前端框架 ⚛️
 

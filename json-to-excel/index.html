@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>JSON转Excel表格工具</title>
+
+    <!-- DataTables CSS -->
+    <link rel="stylesheet" href="https://cdn.datatables.net/1.13.7/css/jquery.dataTables.min.css">
+
+    <!-- 自定义样式 -->
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <div class="header">
+        <h1>JSON转Excel表格工具</h1>
+        <div class="controls">
+            <button class="btn" onclick="formatJSON()">格式化JSON</button>
+            <button class="btn btn-success" onclick="parseJSON()">解析JSON</button>
+            <button class="btn btn-warning" onclick="exportExcel()" id="exportBtn" style="display:none;">导出Excel</button>
+            <button class="btn" onclick="clearAll()">清空</button>
+        </div>
+    </div>
+
+    <div class="container">
+        <div class="left-panel" id="leftPanel">
+            <div class="panel-header">JSON输入 (支持对象数组)</div>
+            <textarea id="jsonInput" placeholder='粘贴JSON数组，例如：
+[
+  {"name": "张三", "age": 25, "city": "北京"},
+  {"name": "李四", "age": 30, "city": "上海"}
+]'></textarea>
+            <div class="stats" id="inputStats">等待输入...</div>
+        </div>
+
+        <div class="right-panel">
+            <div class="error-msg" id="errorMsg"></div>
+            <div class="success-msg" id="successMsg"></div>
+            <div id="tableWrapper">
+                <div class="empty-state">
+                    请在左侧输入JSON数组，然后点击"解析JSON"按钮
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 进度条遮罩层 -->
+    <div class="progress-overlay" id="progressOverlay"></div>
+
+    <!-- 进度条容器 -->
+    <div class="progress-container" id="progressContainer">
+        <div class="progress-title">正在导出Excel文件...</div>
+        <div class="progress-bar-wrapper">
+            <div class="progress-bar" id="progressBar">0%</div>
+        </div>
+        <div class="progress-text" id="progressText">准备开始...</div>
+
+        <!-- 下载链接显示区域 -->
+        <div class="download-link-container" id="downloadLinkContainer">
+            <div class="download-link-title">下载链接:</div>
+            <div class="download-link-wrapper">
+                <input type="text" class="download-link-input" id="downloadLinkInput" readonly>
+                <button class="copy-link-btn" id="copyLinkBtn">复制链接</button>
+            </div>
+        </div>
+
+        <button class="progress-close-btn" id="progressCloseBtn" onclick="hideProgress()">关闭</button>
+    </div>
+
+    <!-- jQuery -->
+    <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
+    <!-- DataTables -->
+    <script src="https://cdn.datatables.net/1.13.7/js/jquery.dataTables.min.js"></script>
+    <!-- SheetJS -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+
+    <!-- 主应用脚本 -->
+    <script type="module" src="js/main.js"></script>
+</body>
+</html>

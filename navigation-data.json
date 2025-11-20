@@ -7,12 +7,12 @@
       "links": [
         {
           "name": "Docker 容器分析器",
-          "url": "./docker-analyzer.html",
+          "url": "./docker-analyzer/",
           "description": "分析和管理 Docker 容器的可视化工具"
         },
         {
           "name": "JSON 转 Excel 工具",
-          "url": "./json-to-excel.html",
+          "url": "./json-to-excel/",
           "description": "将 JSON 数据转换为表格并导出为 Excel 文件"
         },
         {

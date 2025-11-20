@@ -1,0 +1,313 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif;
+    background: #f5f5f5;
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+}
+
+.header {
+    background: #2c3e50;
+    color: white;
+    padding: 10px 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.header h1 {
+    font-size: 18px;
+    font-weight: normal;
+}
+
+.controls {
+    display: flex;
+    gap: 10px;
+}
+
+.btn {
+    padding: 6px 15px;
+    background: #3498db;
+    color: white;
+    border: none;
+    cursor: pointer;
+    font-size: 14px;
+}
+
+.btn:hover {
+    background: #2980b9;
+}
+
+.btn-success {
+    background: #27ae60;
+}
+
+.btn-success:hover {
+    background: #229954;
+}
+
+.btn-warning {
+    background: #e67e22;
+}
+
+.btn-warning:hover {
+    background: #d35400;
+}
+
+.container {
+    display: flex;
+    flex: 1;
+    overflow: hidden;
+}
+
+.left-panel {
+    width: 40%;
+    background: white;
+    border-right: 1px solid #ddd;
+    display: flex;
+    flex-direction: column;
+}
+
+.right-panel {
+    flex: 1;
+    background: white;
+    padding: 20px;
+    overflow: auto;
+}
+
+.panel-header {
+    padding: 10px;
+    background: #ecf0f1;
+    border-bottom: 1px solid #ddd;
+    font-size: 14px;
+    color: #555;
+}
+
+#jsonInput {
+    flex: 1;
+    padding: 10px;
+    border: none;
+    font-family: 'Consolas', 'Monaco', monospace;
+    font-size: 13px;
+    resize: none;
+    outline: none;
+    line-height: 1.5;
+}
+
+.error-msg {
+    padding: 10px;
+    background: #e74c3c;
+    color: white;
+    margin: 10px;
+    display: none;
+}
+
+.success-msg {
+    padding: 10px;
+    background: #27ae60;
+    color: white;
+    margin: 10px;
+    display: none;
+}
+
+#tableWrapper {
+    width: 100%;
+}
+
+.dataTables_wrapper {
+    padding: 0;
+}
+
+table.dataTable {
+    width: 100% !important;
+    border-collapse: collapse;
+}
+
+table.dataTable thead th {
+    background: #34495e;
+    color: white;
+    padding: 10px;
+    font-weight: normal;
+    font-size: 13px;
+}
+
+table.dataTable tbody td {
+    padding: 8px;
+    font-size: 13px;
+    border-bottom: 1px solid #ecf0f1;
+}
+
+table.dataTable tbody tr:hover {
+    background: #f8f9fa;
+}
+
+.dataTables_filter input {
+    padding: 5px;
+    border: 1px solid #ddd;
+    margin-left: 5px;
+}
+
+.dataTables_length select {
+    padding: 3px;
+    border: 1px solid #ddd;
+}
+
+.stats {
+    padding: 10px;
+    background: #f8f9fa;
+    border-top: 1px solid #ddd;
+    font-size: 12px;
+    color: #666;
+}
+
+.empty-state {
+    text-align: center;
+    padding: 50px;
+    color: #999;
+}
+
+.resize-handle {
+    width: 5px;
+    cursor: col-resize;
+    position: absolute;
+    right: 0;
+    top: 0;
+    bottom: 0;
+    background: transparent;
+}
+
+.resize-handle:hover {
+    background: #3498db;
+}
+
+.progress-container {
+    display: none;
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: white;
+    padding: 30px;
+    border-radius: 8px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+    z-index: 10000;
+    min-width: 400px;
+}
+
+.progress-close-btn {
+    margin-top: 15px;
+    padding: 8px 20px;
+    background: #3498db;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 14px;
+    width: 100%;
+}
+
+.progress-close-btn:hover {
+    background: #2980b9;
+}
+
+.download-link-container {
+    display: none;
+    margin-top: 15px;
+    padding: 15px;
+    background: #f8f9fa;
+    border-radius: 4px;
+    border: 1px solid #dee2e6;
+}
+
+.download-link-title {
+    font-size: 13px;
+    color: #495057;
+    margin-bottom: 8px;
+    font-weight: 500;
+}
+
+.download-link-wrapper {
+    display: flex;
+    gap: 8px;
+}
+
+.download-link-input {
+    flex: 1;
+    padding: 8px;
+    border: 1px solid #ced4da;
+    border-radius: 4px;
+    font-size: 12px;
+    font-family: 'Consolas', 'Monaco', monospace;
+    background: white;
+}
+
+.copy-link-btn {
+    padding: 8px 15px;
+    background: #27ae60;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 12px;
+    white-space: nowrap;
+}
+
+.copy-link-btn:hover {
+    background: #229954;
+}
+
+.copy-link-btn.copied {
+    background: #7f8c8d;
+}
+
+.progress-overlay {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0,0,0,0.5);
+    z-index: 9999;
+}
+
+.progress-title {
+    font-size: 16px;
+    color: #2c3e50;
+    margin-bottom: 15px;
+    font-weight: 500;
+}
+
+.progress-bar-wrapper {
+    width: 100%;
+    height: 30px;
+    background: #ecf0f1;
+    border-radius: 15px;
+    overflow: hidden;
+    margin-bottom: 10px;
+}
+
+.progress-bar {
+    height: 100%;
+    background: linear-gradient(90deg, #3498db, #2ecc71);
+    width: 0%;
+    transition: width 0.3s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 12px;
+    font-weight: bold;
+}
+
+.progress-text {
+    font-size: 14px;
+    color: #7f8c8d;
+    text-align: center;
+}

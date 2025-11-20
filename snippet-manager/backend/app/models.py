@@ -47,6 +47,7 @@ class Snippet(db.Model):
     snippet_type = db.Column(db.String(20), nullable=False, index=True)  # 'code' 或 'prompt'
     language = db.Column(db.String(50))  # 编程语言（仅代码片段）
     tags = db.Column(db.String(500))  # 逗号分隔的标签
+    is_favorite = db.Column(db.Boolean, default=False, index=True)  # 是否收藏
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
@@ -61,6 +62,7 @@ class Snippet(db.Model):
             'snippet_type': self.snippet_type,
             'language': self.language,
             'tags': self.tags.split(',') if self.tags else [],
+            'is_favorite': self.is_favorite,
             'created_at': self.created_at.isoformat(),
             'updated_at': self.updated_at.isoformat()
         }

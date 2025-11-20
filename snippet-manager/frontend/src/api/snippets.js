@@ -65,6 +65,11 @@ export default {
     return api.delete(`/snippets/${id}`)
   },
 
+  // 切换收藏状态
+  toggleFavorite(id) {
+    return api.patch(`/snippets/${id}/favorite`)
+  },
+
   // 获取所有标签
   getTags() {
     return api.get('/tags')

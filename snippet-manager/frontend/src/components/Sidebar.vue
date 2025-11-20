@@ -9,6 +9,10 @@
         <el-icon><Plus /></el-icon>
         添加提示词
       </el-button>
+      <el-button type="success" @click="$emit('import-export')" style="width: 100%; margin-top: 10px;">
+        <el-icon><Upload /></el-icon>
+        导入/导出
+      </el-button>
     </div>
 
     <el-divider />
@@ -19,6 +23,7 @@
         <el-radio label="all">全部</el-radio>
         <el-radio label="code">代码片段</el-radio>
         <el-radio label="prompt">提示词</el-radio>
+        <el-radio label="favorite">收藏夹</el-radio>
       </el-radio-group>
     </div>
 
@@ -67,13 +72,14 @@
 
 <script>
 import { ref } from 'vue'
-import { Plus, Search } from '@element-plus/icons-vue'
+import { Plus, Search, Upload } from '@element-plus/icons-vue'
 
 export default {
   name: 'Sidebar',
   components: {
     Plus,
-    Search
+    Search,
+    Upload
   },
   props: {
     tags: {
@@ -85,7 +91,7 @@ export default {
       default: () => ({ type: 'all', search: '', tag: '' })
     }
   },
-  emits: ['filter-change', 'add-snippet'],
+  emits: ['filter-change', 'add-snippet', 'import-export'],
   setup(props, { emit }) {
     const localFilter = ref({ ...props.currentFilter })
 
