@@ -83,6 +83,38 @@ check_docker_compose() {
     fi
 }
 
+# 检测系统架构
+check_architecture() {
+    print_info "检测系统架构..."
+
+    ARCH=$(uname -m)
+    case $ARCH in
+        x86_64|amd64)
+            PLATFORM="linux/amd64"
+            ARCH_NAME="AMD64 (x86_64)"
+            ;;
+        aarch64|arm64)
+            PLATFORM="linux/arm64"
+            ARCH_NAME="ARM64 (aarch64)"
+            ;;
+        armv7l|armhf)
+            PLATFORM="linux/arm/v7"
+            ARCH_NAME="ARMv7"
+            print_warning "检测到 ARMv7 架构，当前镜像仅支持 ARM64 和 AMD64"
+            print_warning "如果拉取失败，请使用 ARM64 或 x86_64 架构的服务器"
+            ;;
+        *)
+            PLATFORM="unknown"
+            ARCH_NAME="$ARCH"
+            print_warning "检测到未知架构: $ARCH"
+            print_warning "支持的架构: AMD64 (x86_64), ARM64 (aarch64)"
+            ;;
+    esac
+
+    print_success "系统架构: $ARCH_NAME"
+    print_info "Docker 平台: $PLATFORM"
+}
+
 # 创建项目目录
 create_project_dir() {
     PROJECT_DIR="$HOME/snippet-manager"
@@ -194,12 +226,27 @@ EOF
 # 拉取镜像
 pull_images() {
     print_info "从 GitHub Container Registry 拉取最新镜像..."
+    print_info "当前系统架构: $ARCH_NAME"
     print_warning "首次运行可能需要几分钟，请耐心等待..."
 
     if $COMPOSE_CMD pull; then
         print_success "镜像拉取成功"
     else
-        print_error "镜像拉取失败！请检查网络连接"
+        print_error "镜像拉取失败！"
+        echo
+        print_info "可能的原因："
+        echo "  1. 网络连接问题 - 请检查网络连接"
+        echo "  2. 架构不匹配 - 当前架构: $ARCH_NAME"
+        if [[ "$PLATFORM" == "linux/arm64" ]]; then
+            echo "  3. ARM64 镜像正在构建中 - 请稍后重试"
+            echo
+            print_warning "如果是新部署的功能，ARM64 镜像可能还在构建中"
+            print_info "请等待 5-10 分钟后重试，或查看构建状态："
+            echo "  https://github.com/sea-t/ps_html_public/actions"
+        fi
+        echo
+        print_info "如需帮助，请访问："
+        echo "  https://github.com/sea-t/ps_html_public/issues"
         exit 1
     fi
 }
@@ -286,6 +333,7 @@ main() {
     # 环境检查
     check_docker
     check_docker_compose
+    check_architecture
 
     # 创建项目
     create_project_dir
