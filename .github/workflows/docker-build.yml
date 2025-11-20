@@ -56,6 +56,7 @@ jobs:
         with:
           context: ./snippet-manager/backend
           file: ./snippet-manager/backend/Dockerfile
+          platforms: linux/amd64,linux/arm64
           push: ${{ github.event_name != 'pull_request' }}
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
@@ -100,6 +101,7 @@ jobs:
         with:
           context: ./snippet-manager/frontend
           file: ./snippet-manager/frontend/Dockerfile
+          platforms: linux/amd64,linux/arm64
           push: ${{ github.event_name != 'pull_request' }}
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
